@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Phone, MapPin, Navigation, Clock, Shield, Menu, User, Truck, Loader2, UserPlus, FileText } from 'lucide-react';
+import { Phone, MapPin, Navigation, Shield, User, UserPlus, FileText, Loader2 } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import { Link } from 'react-router-dom';
 
@@ -232,3 +232,4 @@ const OperatorView = () => {
 };
 
 export default OperatorView;
+
