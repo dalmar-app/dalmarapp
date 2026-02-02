@@ -2,17 +2,19 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import OperatorView from './components/OperatorView';
 import DriverDashboard from './components/DriverDashboard';
-import Login from './components/HomePage'; // Temporarily keeping HomePage as a clearer import if needed, but for now we follow the plan: / -> Operator, /drivers -> Driver
 
-const App = () => {
+function App() {
   return (
     <Router>
       <Routes>
+        {/* Bogga hore ee Operator-ka */}
         <Route path="/" element={<OperatorView />} />
+        
+        {/* Bogga darawalka ee aad hadda dhistay */}
         <Route path="/drivers" element={<DriverDashboard />} />
       </Routes>
     </Router>
   );
-};
+}
 
 export default App;
