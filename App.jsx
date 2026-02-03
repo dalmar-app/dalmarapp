@@ -1,16 +1,16 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import OperatorView from './components/OperatorView';
-import DriverDashboard from './components/DriverDashboard';
+import OperatorView from './OperatorView';
+import DriverDashboard from './DriverDashboard';
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Bogga hore ee laga diro dalabka */}
+        {/* Bogga hore */}
         <Route path="/" element={<OperatorView />} />
         
-        {/* Bogga darawalka ee laga arko dalabka */}
+        {/* Bogga darawalka */}
         <Route path="/drivers" element={<DriverDashboard />} />
       </Routes>
     </Router>
