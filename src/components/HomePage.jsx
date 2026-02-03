@@ -1,7 +1,6 @@
 import React from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// Xogtaada Supabase
 const supabase = createClient(
   'https://nfhzzympuvilshvxsnhd.supabase.co', 
   'sb_publishable_ssWbjSHfhXpm5orvSLyKIw_SNPdJeZT'
@@ -10,76 +9,48 @@ const supabase = createClient(
 const HomePage = () => {
   const phoneNumber = "0906635679";
 
-  const handleCall = async () => {
-    // 1. Weydiisashada Location-ka Macaamiilka
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        const mapLink = `https://www.google.com/maps?q=${lat},${lng}`;
+  const sendBooking = async (locDescription) => {
+    const { error } = await supabase.from('bookings').insert([
+      { 
+        phone: '0906635679', 
+        location: locDescription,
+        trip_type: 'Bajaaj' 
+      }
+    ]);
+    if (error) console.error("Supabase Error:", error);
+    window.location.href = `tel:${phoneNumber}`;
+  };
 
-        // 2. Xogta u dir Supabase (Tan ayaa darawalka u muuqan doonta)
-        const { error } = await supabase.from('bookings').insert([
-          { 
-            phone: phoneNumber, 
-            location: mapLink, // Halkan waxaa darawalka ugu dhacaya link-ga map-ka
-            trip_type: 'Bajaaj' 
-          }
-        ]);
-
-        if (error) console.error("Database error:", error);
-
-        // 3. Markay xogtu baxdo, hadda wac
-        window.location.href = `tel:${phoneNumber}`;
-      }, (error) => {
-        // Haddii uu qofku Location-ka diido, wicitaanka uun samee
-        console.warn("Location denied");
-        window.location.href = `tel:${phoneNumber}`;
-      });
+  const handleCall = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // Haddii uu ogolaado, xogta saxda ah u dir
+          const coords = `${position.coords.latitude},${position.coords.longitude}`;
+          sendBooking(coords);
+        },
+        (error) => {
+          // Haddii uu diido, u sheeg darawalka inaan la helin location-ka
+          console.warn("Location denied:", error);
+          sendBooking("Location Diidmo (Garoowe)");
+        },
+        { timeout: 10000 }
+      );
     } else {
-      window.location.href = `tel:${phoneNumber}`;
+      sendBooking("Browser-ka ma taageero GPS");
     }
   };
 
   return (
-    <div style={{ 
-      backgroundColor: '#ffc107', 
-      minHeight: '100vh', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      fontFamily: 'sans-serif',
-      padding: '20px' 
-    }}>
-      <div style={{ fontSize: '100px', marginBottom: '10px' }}>🚕</div>
-      <h1 style={{ fontSize: '40px', fontWeight: '900', margin: '0 0 10px 0' }}>DALMAR</h1>
-      <p style={{ fontSize: '18px', color: '#333', marginBottom: '30px', textAlign: 'center' }}>
-        Ma u baahantahay Bajaaj degdeg ah? <br/> Guji batoonka hoose.
-      </p>
-      
+    <div style={{ backgroundColor: '#ffc107', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'sans-serif' }}>
+      <h1 style={{ fontSize: '50px', fontWeight: 'bold' }}>DALMAR 🚕</h1>
       <button 
         onClick={handleCall}
-        style={{
-          backgroundColor: '#000',
-          color: '#ffc107',
-          border: 'none',
-          padding: '20px 40px',
-          borderRadius: '50px',
-          fontSize: '22px',
-          fontWeight: 'bold',
-          cursor: 'pointer',
-          boxShadow: '0 10px 20px rgba(0,0,0,0.3)',
-          width: '100%',
-          maxWidth: '300px'
-        }}
+        style={{ backgroundColor: '#000', color: '#ffc107', padding: '25px 50px', borderRadius: '50px', border: 'none', fontSize: '24px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 10px 20px rgba(0,0,0,0.3)' }}
       >
         📞 WAC HADDA
       </button>
-      
-      <p style={{ marginTop: '20px', fontSize: '12px', color: '#555' }}>
-        * Markaad riixdo, ogolaaw "Share Location" si uu darawalku kuugu yimaado.
-      </p>
+      <p style={{ marginTop: '20px' }}>Markaad riixdo, ogolaaw Location-ka</p>
     </div>
   );
 };
