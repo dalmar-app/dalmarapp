@@ -7,11 +7,9 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Bogga hore */}
         <Route path="/" element={<OperatorView />} />
-        
-        {/* Bogga darawalka */}
         <Route path="/drivers" element={<DriverDashboard />} />
+        <Route path="/driver" element={<DriverDashboard />} />
       </Routes>
     </Router>
   );
