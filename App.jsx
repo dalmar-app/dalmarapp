@@ -7,9 +7,11 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Kan waa bogga macmiilku wax ka dalbanayo */}
         <Route path="/" element={<OperatorView />} />
+        
+        {/* Kan waa bogga darawalku ka arkayo dalabka */}
         <Route path="/drivers" element={<DriverDashboard />} />
-        <Route path="/driver" element={<DriverDashboard />} />
       </Routes>
     </Router>
   );
