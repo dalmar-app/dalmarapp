@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// Xogtaada Supabase ee rasmiga ah
 const supabase = createClient(
   'https://nfhzzympuvilshvxsnhd.supabase.co', 
   'sb_publishable_ssWbjSHfhXpm5orvSLyKIw_SNPdJeZT'
@@ -13,7 +12,6 @@ const DriverDashboard = () => {
   useEffect(() => {
     fetchInitial();
 
-    // DHAGAYSI LIVE AH (REALTIME)
     const channel = supabase.channel('realtime-bookings')
       .on('postgres_changes', { 
         event: 'INSERT', 
@@ -21,8 +19,6 @@ const DriverDashboard = () => {
         table: 'bookings' 
       }, (payload) => {
         setBookings((prev) => [payload.new, ...prev]);
-        
-        // Dhawaaq ogeysiis ah (BIIB!) marka dalab yimaado
         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2505/2505-preview.mp3');
         audio.play().catch(e => console.log("Audio play failed", e));
       })
@@ -32,12 +28,7 @@ const DriverDashboard = () => {
   }, []);
 
   const fetchInitial = async () => {
-    const { data, error } = await supabase
-      .from('bookings')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) console.log("Error fetching:", error);
+    const { data } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
     setBookings(data || []);
   };
 
@@ -46,114 +37,99 @@ const DriverDashboard = () => {
       backgroundColor: '#0f172a', 
       color: '#ffffff', 
       minHeight: '100vh', 
-      padding: '20px', 
+      display: 'flex',
+      flexDirection: 'column',
       fontFamily: '"Inter", sans-serif' 
     }}>
+      
       {/* Header-ka Dashboard-ka */}
       <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        borderBottom: '1px solid #1e293b', 
-        paddingBottom: '15px',
-        marginBottom: '20px'
+        padding: '20px',
+        borderBottom: '1px solid #1e293b',
+        backgroundColor: '#1e293b',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        position: 'sticky',
+        top: 0,
+        zIndex: 10
       }}>
-        <div>
-          <h2 style={{ color: '#38bdf8', margin: 0, fontSize: '24px' }}>Dalmar Driver 🚖</h2>
-          <p style={{ color: '#94a3b8', fontSize: '12px', margin: 0 }}>Garoowe, Nugaal</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '24px' }}>🛺</span>
+          <h2 style={{ color: '#38bdf8', margin: 0, fontSize: '20px' }}>Dalmar Admin</h2>
         </div>
-        <div style={{ 
-          backgroundColor: '#065f46', 
-          color: '#34d399', 
-          padding: '6px 15px', 
-          borderRadius: '50px', 
-          fontSize: '12px',
-          fontWeight: 'bold',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '5px'
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#34d399' }}>
           <span style={{ height: '8px', width: '8px', backgroundColor: '#34d399', borderRadius: '50%' }}></span>
-          LIVE ONLINE
+          LIVE
         </div>
       </div>
 
-      {/* List-ka Dalabaadka */}
-      {bookings.length === 0 ? (
-        <div style={{ textAlign: 'center', marginTop: '100px', opacity: 0.6 }}>
-          <div style={{ fontSize: '60px', marginBottom: '10px' }}>📡</div>
-          <h3>Ma jiraan dalabaad hadda...</h3>
-          <p>Iska deji, marka uu macaamiil soo waco halkan ayay ka soo muuqan doontaa.</p>
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gap: '20px' }}>
-          {bookings.map((item) => (
+      {/* Main Content */}
+      <div style={{ padding: '20px', flex: 1 }}>
+        {bookings.length === 0 ? (
+          <div style={{ textAlign: 'center', marginTop: '100px', opacity: 0.5 }}>
+            <div style={{ fontSize: '60px' }}>📡</div>
+            <p>Ma jiraan dalabaad hadda...</p>
+          </div>
+        ) : (
+          bookings.map((item) => (
             <div key={item.id} style={{ 
               backgroundColor: '#1e293b', 
               padding: '20px', 
-              borderRadius: '24px', 
+              borderRadius: '20px', 
+              marginBottom: '20px', 
               border: '1px solid #334155',
-              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ backgroundColor: '#38bdf8', padding: '10px', borderRadius: '12px', fontSize: '20px' }}>👤</div>
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: '18px' }}>{item.phone}</h3>
-                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>Macaamiil Cusub</span>
-                  </div>
-                </div>
-                <span style={{ color: '#38bdf8', fontSize: '13px', fontWeight: '500' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+                <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#38bdf8' }}>📞 {item.phone}</span>
+                <span style={{ fontSize: '12px', color: '#94a3b8' }}>
                   {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
 
-              <div style={{ marginBottom: '15px' }}>
-                <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '5px' }}>📍 Meesha uu joogo:</p>
-                <div style={{ color: '#f1f5f9', fontWeight: '500' }}>{item.location}</div>
-              </div>
-
               {/* Khariidadda (OpenStreetMap) */}
-              <div style={{ 
-                width: '100%', 
-                height: '200px', 
-                borderRadius: '16px', 
-                overflow: 'hidden', 
-                border: '1px solid #000',
-                marginBottom: '15px' 
-              }}>
+              <div style={{ width: '100%', height: '180px', borderRadius: '15px', overflow: 'hidden', border: '1px solid #000', marginBottom: '15px' }}>
                 <iframe 
                   width="100%" 
                   height="100%" 
-                  src={`https://www.openstreetmap.org/export/embed.html?bbox=48.47,8.39,48.51,8.43&layer=mapnik&marker=8.4116,48.4918`}
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=48.47,8.39,48.51,8.43&layer=mapnik&marker=${item.location}`}
                   style={{ border: 0 }}
-                  title="Location Map"
                 ></iframe>
               </div>
 
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button 
-                  onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}`, '_blank')}
-                  style={{ 
-                    flex: 1,
-                    backgroundColor: '#38bdf8', 
-                    color: '#0f172a', 
-                    border: 'none', 
-                    padding: '14px', 
-                    borderRadius: '12px', 
-                    fontWeight: 'bold', 
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    transition: '0.3s'
-                  }}
-                >
-                  FURI GOOGLE MAPS 🚗
-                </button>
-              </div>
+              <button 
+                onClick={() => window.open(`http://maps.google.com/maps?q=${item.location}`, '_blank')}
+                style={{ 
+                  width: '100%', 
+                  backgroundColor: '#38bdf8', 
+                  color: '#0f172a', 
+                  border: 'none', 
+                  padding: '14px', 
+                  borderRadius: '12px', 
+                  fontWeight: 'bold', 
+                  cursor: 'pointer' 
+                }}
+              >
+                HAGI (GOOGLE MAPS) 🚗
+              </button>
             </div>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
+
+      {/* Copyright Bottom */}
+      <div style={{ 
+        padding: '20px', 
+        textAlign: 'center', 
+        fontSize: '13px', 
+        color: '#94a3b8', 
+        backgroundColor: '#1e293b' 
+      }}>
+        © {new Date().getFullYear()} Ahmed Abdirisak. All Rights Reserved.
+        <br />
+        <span style={{ fontSize: '10px', opacity: 0.5, marginTop: '5px', display: 'block' }}>DEVELOPED BY AHMED</span>
+      </div>
     </div>
   );
 };
