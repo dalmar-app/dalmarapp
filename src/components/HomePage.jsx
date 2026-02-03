@@ -1,14 +1,39 @@
 import React from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+// Xogtaada Supabase
+const supabase = createClient(
+  'https://nfhzzympuvilshvxsnhd.supabase.co', 
+  'sb_publishable_ssWbjSHfhXpm5orvSLyKIw_SNPdJeZT'
+);
 
 const HomePage = () => {
   const phoneNumber = "0906635679";
 
-  const handleCall = () => {
+  const handleCall = async () => {
+    // 1. Weydiisashada Location-ka Macaamiilka
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        // Halkan hadhow waxaad ku dari kartaa Supabase si loo keydiyo Location-ka dhabta ah
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const mapLink = `https://www.google.com/maps?q=${lat},${lng}`;
+
+        // 2. Xogta u dir Supabase (Tan ayaa darawalka u muuqan doonta)
+        const { error } = await supabase.from('bookings').insert([
+          { 
+            phone: phoneNumber, 
+            location: mapLink, // Halkan waxaa darawalka ugu dhacaya link-ga map-ka
+            trip_type: 'Bajaaj' 
+          }
+        ]);
+
+        if (error) console.error("Database error:", error);
+
+        // 3. Markay xogtu baxdo, hadda wac
         window.location.href = `tel:${phoneNumber}`;
-      }, () => {
+      }, (error) => {
+        // Haddii uu qofku Location-ka diido, wicitaanka uun samee
+        console.warn("Location denied");
         window.location.href = `tel:${phoneNumber}`;
       });
     } else {
@@ -17,47 +42,44 @@ const HomePage = () => {
   };
 
   return (
-    <div style={{ backgroundColor: '#ffffff', minHeight: '100vh', fontFamily: 'sans-serif', color: '#1a1a1a' }}>
-      {/* Hero Section */}
-      <div style={{ backgroundColor: '#ffc107', padding: '40px 20px', textAlign: 'center', borderRadius: '0 0 40px 40px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
-        <h1 style={{ fontSize: '35px', fontWeight: '900', margin: 0, color: '#000' }}>DALMAR</h1>
-        <p style={{ fontSize: '16px', marginTop: '10px', opacity: 0.8 }}>Raaxo iyo Amni kasta oo aad u baahato</p>
-      </div>
-
-      <div style={{ padding: '30px 20px', textAlign: 'center' }}>
-        <div style={{ fontSize: '80px', marginBottom: '20px' }}>🚕</div>
-        <h2 style={{ fontSize: '24px', fontWeight: '700' }}>Ma u baahantahay Bajaaj?</h2>
-        <p style={{ color: '#666', marginBottom: '30px' }}>Guji batoonka hoose si aad u hesho darawalka kuugu dhow Garoowe.</p>
-
-        <button 
-          onClick={handleCall}
-          style={{
-            width: '100%',
-            maxWidth: '300px',
-            backgroundColor: '#000',
-            color: '#ffc107',
-            border: 'none',
-            padding: '20px',
-            borderRadius: '50px',
-            fontSize: '20px',
-            fontWeight: 'bold',
-            cursor: 'pointer',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '15px',
-            margin: '0 auto'
-          }}
-        >
-          <span>📞 Wac Hadda</span>
-        </button>
-
-        <div style={{ marginTop: '40px', display: 'flex', justifyContent: 'center', gap: '20px', color: '#888' }}>
-          <div>🛡️ Safar Amaan ah</div>
-          <div>⚡ Jawaab Degdeg ah</div>
-        </div>
-      </div>
+    <div style={{ 
+      backgroundColor: '#ffc107', 
+      minHeight: '100vh', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      fontFamily: 'sans-serif',
+      padding: '20px' 
+    }}>
+      <div style={{ fontSize: '100px', marginBottom: '10px' }}>🚕</div>
+      <h1 style={{ fontSize: '40px', fontWeight: '900', margin: '0 0 10px 0' }}>DALMAR</h1>
+      <p style={{ fontSize: '18px', color: '#333', marginBottom: '30px', textAlign: 'center' }}>
+        Ma u baahantahay Bajaaj degdeg ah? <br/> Guji batoonka hoose.
+      </p>
+      
+      <button 
+        onClick={handleCall}
+        style={{
+          backgroundColor: '#000',
+          color: '#ffc107',
+          border: 'none',
+          padding: '20px 40px',
+          borderRadius: '50px',
+          fontSize: '22px',
+          fontWeight: 'bold',
+          cursor: 'pointer',
+          boxShadow: '0 10px 20px rgba(0,0,0,0.3)',
+          width: '100%',
+          maxWidth: '300px'
+        }}
+      >
+        📞 WAC HADDA
+      </button>
+      
+      <p style={{ marginTop: '20px', fontSize: '12px', color: '#555' }}>
+        * Markaad riixdo, ogolaaw "Share Location" si uu darawalku kuugu yimaado.
+      </p>
     </div>
   );
 };
