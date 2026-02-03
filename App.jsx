@@ -7,10 +7,10 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Kan waa bogga macmiilku wax ka dalbanayo */}
+        {/* Bogga hore ee macmiilka */}
         <Route path="/" element={<OperatorView />} />
         
-        {/* Kan waa bogga darawalku ka arkayo dalabka */}
+        {/* Bogga darawalka oo kaliya */}
         <Route path="/drivers" element={<DriverDashboard />} />
       </Routes>
     </Router>
