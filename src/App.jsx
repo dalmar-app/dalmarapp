@@ -1,6 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './Home'; // Hubi inuu magacu yahay Home (H weyn)
+
+// HALKAN AYAA CILADDU JIRTAY - WAA INAAN SI SAX AH U TILMAAMNAA GALKA
+import Home from './components/HomePage'; 
+
 import DriverDashboard from './DriverDashboard';
 import AdminPanel from './AdminPanel';
 
@@ -8,13 +11,10 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Bogga cusub ee qurxoon ee Home-ka */}
+        {/* Bogga hore oo hadda laga soo aqrinayo galka components */}
         <Route path="/" element={<Home />} />
         
-        {/* Bogga Darawalka */}
         <Route path="/drivers" element={<DriverDashboard />} />
-        
-        {/* Bogga Admin-ka */}
         <Route path="/admin-secret-page" element={<AdminPanel />} />
       </Routes>
     </Router>
