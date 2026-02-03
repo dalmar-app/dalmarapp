@@ -1,20 +1,18 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-// Waxaan soo kaxaynaynaa bogga hore ee foomka (HomePage)
-import OperatorView from './components/HomePage'; 
-
-// Waxaan soo kaxaynaynaa bogga madow ee darawalka (DriverDashboard)
+// Soo kaxaynta boggaga
+import HomePage from './components/HomePage'; 
 import DriverDashboard from './DriverDashboard'; 
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Marka qofku link-ga caadiga ah furo: https://dalmarapp.vercel.app/ */}
-        <Route path="/" element={<OperatorView />} />
+        {/* Bogga dadweynaha (Customer View) */}
+        <Route path="/" element={<HomePage />} />
         
-        {/* Marka la furo link-ga darawalka: https://dalmarapp.vercel.app/drivers */}
+        {/* Bogga darawalka (Driver Dashboard) */}
         <Route path="/drivers" element={<DriverDashboard />} />
       </Routes>
     </Router>
