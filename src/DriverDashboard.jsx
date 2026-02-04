@@ -20,7 +20,7 @@ const DriverDashboard = () => {
     if (data) {
       if (data.length > lastCount) {
         const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
-        audio.play().catch(() => console.log("Audio play blocked"));
+        audio.play().catch(() => console.log("Audio blocked"));
       }
       setBookings(data);
       setLastCount(data.length);
@@ -51,56 +51,58 @@ const DriverDashboard = () => {
 
   return (
     <div style={styles.body}>
-      {/* CSS For Animation */}
+      {/* --- QAYBTA ANIMATION-KA CSS --- */}
       <style>
         {`
-          @keyframes moveBajaaj {
-            0% { transform: translateX(-20px); }
-            50% { transform: translateX(20px); }
-            100% { transform: translateX(-20px); }
+          @keyframes driveBajaaj {
+            0% { transform: translateX(-100px); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: translateX(100px); opacity: 0; }
           }
-          .bajaaj-moving {
+          .bajaaj-animation {
             display: inline-block;
-            animation: moveBajaaj 2s infinite ease-in-out;
-            font-size: 40px;
+            animation: driveBajaaj 3s infinite linear;
+            font-size: 50px;
+            filter: drop-shadow(0 0 10px #38bdf8);
+          }
+          .header-container {
+            overflow: hidden; /* Si aysan bajaajta banaanka ugu bixin */
+            width: 100%;
+            text-align: center;
+            padding: 20px 0;
           }
         `}
       </style>
 
-      <header style={styles.header}>
-        <div className="bajaaj-moving">🛺</div>
+      <header className="header-container">
+        {/* ICON-KA BAJAAJTA EE SOCOTA */}
+        <div className="bajaaj-animation">🛺</div>
         <h2 style={{color: '#38bdf8', marginTop: '10px'}}>DARAWAL DASHBOARD</h2>
-        <p>{bookings.length} Dalab ayaa furan hadda</p>
+        <p style={{color: '#94a3b8'}}>{bookings.length} Dalab ayaa furan hadda</p>
       </header>
 
       {bookings.length === 0 ? (
         <div style={styles.empty}>
            <p>Ma jiro dalab cusub hadda...</p>
-           <div style={{fontSize: '50px', opacity: 0.3}}>🛺</div>
+           <div style={{fontSize: '80px', opacity: 0.1}}>🛺</div>
         </div>
       ) : (
         bookings.map(order => (
           <div key={order.id} style={styles.orderCard}>
             <div style={styles.details}>
-              <p><strong>📞 Nambarka:</strong> {order.phone}</p>
-              <p><strong>📍 Meesha:</strong> {order.city}</p>
+              <p><strong>📞 Tel:</strong> {order.phone}</p>
+              <p><strong>📍 Magaalada:</strong> {order.city}</p>
               <p style={{fontSize: '12px', color: '#94a3b8'}}>
-                Saacadda: {new Date(order.created_at).toLocaleTimeString()}
+                {new Date(order.created_at).toLocaleTimeString()}
               </p>
             </div>
 
             <div style={styles.grid}>
-              <a href={`tel:${order.phone}`} style={styles.callBtn}>
-                📞 WAC MACMIILKA
-              </a>
-              <button onClick={() => openMap(order.lat, order.lng)} style={styles.mapBtn}>
-                🗺️ ARAG KHARIIDADA
-              </button>
+              <a href={`tel:${order.phone}`} style={styles.callBtn}>WAC MACMIILKA</a>
+              <button onClick={() => openMap(order.lat, order.lng)} style={styles.mapBtn}>ARAG KHARIIDADA</button>
             </div>
 
-            <button onClick={() => handleAccept(order.id)} style={styles.acceptBtn}>
-              QABO DALABKA
-            </button>
+            <button onClick={() => handleAccept(order.id)} style={styles.acceptBtn}>QABO DALABKA</button>
           </div>
         ))
       )}
@@ -110,13 +112,12 @@ const DriverDashboard = () => {
 
 const styles = {
   body: { padding: '20px', backgroundColor: '#0f172a', minHeight: '100vh', color: 'white', fontFamily: 'sans-serif' },
-  header: { textAlign: 'center', marginBottom: '30px' },
-  orderCard: { backgroundColor: '#1e293b', padding: '20px', borderRadius: '15px', marginBottom: '20px', border: '1px solid #334155', boxShadow: '0 4px 15px rgba(0,0,0,0.3)' },
+  orderCard: { backgroundColor: '#1e293b', padding: '20px', borderRadius: '15px', marginBottom: '20px', border: '1px solid #334155', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' },
   details: { marginBottom: '15px', fontSize: '18px' },
   grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '15px' },
-  callBtn: { backgroundColor: '#22c55e', color: 'white', padding: '15px', borderRadius: '10px', textDecoration: 'none', textAlign: 'center', fontWeight: 'bold', fontSize: '14px' },
-  mapBtn: { backgroundColor: '#3b82f6', color: 'white', border: 'none', padding: '15px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' },
-  acceptBtn: { width: '100%', padding: '15px', backgroundColor: '#38bdf8', border: 'none', borderRadius: '10px', fontWeight: 'bold', color: '#0f172a', cursor: 'pointer' },
+  callBtn: { backgroundColor: '#22c55e', color: 'white', padding: '15px', borderRadius: '10px', textDecoration: 'none', textAlign: 'center', fontWeight: 'bold' },
+  mapBtn: { backgroundColor: '#3b82f6', color: 'white', border: 'none', padding: '15px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' },
+  acceptBtn: { width: '100%', padding: '15px', backgroundColor: '#38bdf8', border: 'none', borderRadius: '10px', fontWeight: 'bold', color: '#0f172a' },
   empty: { textAlign: 'center', marginTop: '100px', color: '#475569' }
 };
 
