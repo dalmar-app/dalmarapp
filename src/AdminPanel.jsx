@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -7,61 +7,96 @@ const supabase = createClient(
 );
 
 const AdminPanel = () => {
+  const [bookings, setBookings] = useState([]);
   const [drivers, setDrivers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [newDriver, setNewDriver] = useState({ name: '', phone: '', pin: '', city: 'Garowe' });
+  const somaliCities = ["Garowe", "Galkacyo", "Muqdisho", "Beledweyne", "Kismaayo", "Eyl", "Baydhabo"];
 
   useEffect(() => {
-    fetchDrivers();
+    fetchData();
   }, []);
 
-  const fetchDrivers = async () => {
-    const { data, error } = await supabase
-      .from('drivers')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) console.error(error);
-    else setDrivers(data || []);
-    setLoading(false);
+  const fetchData = async () => {
+    const { data: bData } = await supabase.from('bookings').select('*').order('created_at', { ascending: false });
+    const { data: dData } = await supabase.from('drivers').select('*');
+    setBookings(bData || []);
+    setDrivers(dData || []);
   };
 
-  if (loading) return <div style={{color: 'white', textAlign: 'center', marginTop: '50px'}}>Loading Admin Panel...</div>;
+  const addDriver = async (e) => {
+    e.preventDefault();
+    const { error } = await supabase.from('drivers').insert([newDriver]);
+    if (!error) {
+      alert("Darawal cusub waa la diiwaangeliyey!");
+      setNewDriver({ name: '', phone: '', pin: '', city: 'Garowe' });
+      fetchData();
+    } else {
+      alert("Cilad: " + error.message);
+    }
+  };
 
   return (
-    <div style={{ padding: '20px', backgroundColor: '#0f172a', minHeight: '100vh', color: '#fff', fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #38bdf8', paddingBottom: '10px', marginBottom: '20px' }}>
-        <h2 style={{ color: '#38bdf8', margin: 0 }}>Maamulka Darawallada (Admin)</h2>
-        <span style={{ backgroundColor: '#38bdf8', color: '#0f172a', padding: '5px 12px', borderRadius: '20px', fontWeight: 'bold', fontSize: '12px' }}>
-          {drivers.length} Darawal
-        </span>
+    <div style={{ padding: '20px', backgroundColor: '#0f172a', minHeight: '100vh', color: 'white', fontFamily: 'sans-serif' }}>
+      <h1 style={{ textAlign: 'center', color: '#38bdf8' }}>DALMAR ADMIN CONTROL</h1>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '30px' }}>
+        
+        {/* Qaybta lagu daro Darawalka (Amniga) */}
+        <section style={{ backgroundColor: '#1e293b', padding: '20px', borderRadius: '15px' }}>
+          <h3>➕ Diiwaangeli Darawal Cusub</h3>
+          <form onSubmit={addDriver}>
+            <input type="text" placeholder="Magaca" value={newDriver.name} onChange={e => setNewDriver({...newDriver, name: e.target.value})} style={styles.input} required />
+            <input type="text" placeholder="Tel (e.g 666635679)" value={newDriver.phone} onChange={e => setNewDriver({...newDriver, phone: e.target.value})} style={styles.input} required />
+            <input type="text" placeholder="PIN (e.g 1234)" value={newDriver.pin} onChange={e => setNewDriver({...newDriver, pin: e.target.value})} style={styles.input} required />
+            <select value={newDriver.city} onChange={e => setNewDriver({...newDriver, city: e.target.value})} style={styles.input}>
+              {somaliCities.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <button type="submit" style={styles.btn}>DIYYAARI DARAWALKAN</button>
+          </form>
+        </section>
+
+        {/* Qaybta Tirakoobka */}
+        <section style={{ backgroundColor: '#1e293b', padding: '20px', borderRadius: '15px' }}>
+          <h3>📊 Warbixinta Guud</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '20px' }}>
+            <div style={styles.statBox}><h4>{bookings.length}</h4><p>Dalabaad</p></div>
+            <div style={styles.statBox}><h4>{drivers.length}</h4><p>Darawallo</p></div>
+          </div>
+        </section>
       </div>
-      
-      <div style={{ display: 'grid', gap: '15px' }}>
-        {drivers.length === 0 ? <p>Ma jiraan darawalno diiwaangashan.</p> : 
-          drivers.map((d) => (
-            <div key={d.id} style={{ backgroundColor: '#1e293b', padding: '15px', borderRadius: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #334155' }}>
-              <div>
-                <h4 style={{ margin: '0 0 5px 0', color: '#fff' }}>{d.name}</h4>
-                <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>📞 {d.phone}</p>
-                <p style={{ margin: 0, fontSize: '13px', color: '#34d399' }}>🔑 PIN: {d.pin}</p>
-              </div>
-              <button 
-                onClick={async () => {
-                  if(window.confirm(`Ma hubtaa inaad tirtirto ${d.name}?`)) {
-                    await supabase.from('drivers').delete().eq('id', d.id);
-                    fetchDrivers();
-                  }
-                }}
-                style={{ backgroundColor: '#ef4444', color: '#fff', border: 'none', padding: '10px 15px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}
-              >
-                TIRTIR
-              </button>
-            </div>
-          ))
-        }
-      </div>
+
+      {/* Liiska Dalabaadka Magaalooyinka */}
+      <h3 style={{ marginTop: '40px' }}>📋 Dalabaadka u dambeeyay</h3>
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
+        <thead>
+          <tr style={{ backgroundColor: '#334155' }}>
+            <th style={styles.th}>Magaalada</th>
+            <th style={styles.th}>Telka Macmiilka</th>
+            <th style={styles.th}>Status</th>
+            <th style={styles.th}>Taariikhda</th>
+          </tr>
+        </thead>
+        <tbody>
+          {bookings.map(b => (
+            <tr key={b.id} style={{ borderBottom: '1px solid #334155' }}>
+              <td style={styles.td}>{b.city}</td>
+              <td style={styles.td}>{b.phone}</td>
+              <td style={styles.td}>{b.status}</td>
+              <td style={styles.td}>{new Date(b.created_at).toLocaleString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
+};
+
+const styles = {
+  input: { width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '8px', border: 'none' },
+  btn: { width: '100%', padding: '12px', backgroundColor: '#38bdf8', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' },
+  statBox: { textAlign: 'center', backgroundColor: '#334155', padding: '20px', borderRadius: '10px', width: '40%' },
+  th: { padding: '12px', textAlign: 'left' },
+  td: { padding: '12px' }
 };
 
 export default AdminPanel;
