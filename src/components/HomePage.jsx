@@ -12,12 +12,18 @@ const HomePage = () => {
   const [detectedCity, setDetectedCity] = useState("");
 
   useEffect(() => {
+    // Isku day inaad ogaato magaalada marka bogga la furo
     navigator.geolocation.getCurrentPosition(async (position) => {
       try {
         const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`);
         const data = await res.json();
-        setDetectedCity(data.city || data.locality || "");
-      } catch (err) { console.log("Magaalada lama aqoonsan"); }
+        
+        // Waxaan halkan ka saarnay "District" iyo wixii la mid ah
+        // Kaliya magaca magaalada safiga ah ayaan qaadanaynaa
+        const rawCity = data.city || data.locality || "";
+        const cleanCity = rawCity.replace(/District|Region|State|Municipality/gi, "").trim();
+        setDetectedCity(cleanCity);
+      } catch (err) { console.log("Magaalada lama ogaan"); }
     });
   }, []);
 
@@ -36,28 +42,43 @@ const HomePage = () => {
       try {
         const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`);
         const data = await res.json();
-        const cityName = data.city || data.locality || "Garowe";
+        
+        // Mar kale halkan ka nadiifi magaca magaalada
+        const rawCity = data.city || data.locality || "Garowe";
+        const cleanCity = rawCity.replace(/District|Region|State|Municipality/gi, "").trim();
 
         const { error } = await supabase.from('bookings').insert([{ 
           phone: 'Macaamiil Cusub', 
           location: `${lat},${lon}`, 
-          city: cityName, 
+          city: cleanCity, 
           status: 'pending' 
         }]);
         if (!error) setSent(true);
       } catch (err) { alert("Cilad internet!"); }
       setLoading(false);
     }, () => {
-      alert("Fadlan daar Location-ka oo ogolow Browser-ka");
+      alert("Fadlan daar Location-ka");
       setLoading(false);
     }, options);
+  };
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'DALMAR App',
+          text: 'Walaal kaalay dalbo bajaaj adoo gurigaaga jooga, adeeg degdeg ah!',
+          url: 'https://dalmarapp.vercel.app/',
+        });
+      } catch (err) { console.log('Share error'); }
+    }
   };
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
         
-        {/* --- LOGO SECTION --- */}
+        {/* LOGO */}
         <div style={styles.logoContainer}>
            <div style={styles.iconCircle}>
               <span style={{fontSize: '40px'}}>🛺</span>
@@ -71,6 +92,9 @@ const HomePage = () => {
             <button onClick={requestBajaaj} disabled={loading} style={styles.btn}>
               {loading ? 'Raadinaya...' : `DALBO BAJAAJ ${detectedCity.toUpperCase()}`}
             </button>
+            <button onClick={handleShare} style={styles.shareBtn}>
+               📤 LA WADAAG SAAXIIB
+            </button>
           </div>
         ) : (
           <div style={{marginTop: '20px'}}>
@@ -79,10 +103,9 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* --- CONTACT SECTION --- */}
+        {/* CONTACT */}
         <div style={styles.contactSection}>
           <p style={{color: '#94a3b8', fontSize: '13px', marginBottom: '15px'}}>Ma u baahan tahay caawimaad?</p>
-          
           <div style={styles.contactGrid}>
             <a href="https://wa.me/252906635679" target="_blank" style={{...styles.contactBtn, backgroundColor: '#25D366'}}>
               💬 WhatsApp
@@ -108,9 +131,10 @@ const styles = {
   brandName: { color: 'white', fontSize: '28px', letterSpacing: '2px', fontWeight: 'bold', margin: '0' },
   tagline: { color: '#38bdf8', fontSize: '11px', marginTop: '5px', textTransform: 'uppercase', fontWeight: 'bold' },
   btn: { width: '100%', padding: '18px', background: 'linear-gradient(45deg, #0284c7, #7c3aed)', color: 'white', border: 'none', borderRadius: '15px', fontWeight: 'bold', cursor: 'pointer', fontSize: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.3)' },
+  shareBtn: { width: '100%', padding: '12px', backgroundColor: 'transparent', color: '#38bdf8', border: '2px dashed #38bdf8', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', marginTop: '15px', fontSize: '14px' },
   contactSection: { marginTop: '25px', borderTop: '1px solid #334155', paddingTop: '20px' },
   contactGrid: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  contactBtn: { padding: '12px', color: 'white', textDecoration: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', display: 'block', transition: '0.3s' }
+  contactBtn: { padding: '12px', color: 'white', textDecoration: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', display: 'block' }
 };
 
 export default HomePage;
