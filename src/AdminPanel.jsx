@@ -27,7 +27,8 @@ const AdminPanel = () => {
 
   const handleAdminLogin = (e) => {
     e.preventDefault();
-    if (adminUser === "Ahmed" && adminPin === "2003") {
+    // 1. LOGIN FIX: Ma kala saarayso xarfaha waaweyn iyo kuwa yar
+    if (adminUser.toLowerCase() === "ahmed" && adminPin === "2003") {
       setIsAdminLoggedIn(true);
       fetchData();
     } else {
@@ -41,9 +42,10 @@ const AdminPanel = () => {
 
   const addDriver = async (e) => {
     e.preventDefault();
+    // 2. UNIQUE PIN: Hubi haddii PIN-kaas darawal kale hore u lahaa
     const { data: existing } = await supabase.from('drivers').select('pin').eq('pin', newDriver.pin).single();
     if (existing) {
-      alert("PIN-kan hore ayaa loo isticmaalay! Fadlan dooro mid kale.");
+      alert("PIN-kan hore ayaa loo isticmaalay! Fadlan darawalka u samee PIN ka duwan.");
       return;
     }
     const { error } = await supabase.from('drivers').insert([newDriver]);
@@ -54,17 +56,25 @@ const AdminPanel = () => {
     }
   };
 
+  // 3. REMOVE DRIVER: Shaqada lagu tirtirayo darawalka
   const removeDriver = async (id, name) => {
-    if (window.confirm(`Ma hubtaa inaad tirtirto darawal ${name}?`)) {
-      await supabase.from('drivers').delete().eq('id', id);
-      fetchData();
+    if (window.confirm(`Ma hubtaa inaad gabi ahaanba tirtirto darawal ${name}?`)) {
+      const { error } = await supabase.from('drivers').delete().eq('id', id);
+      if (!error) {
+        fetchData();
+      } else {
+        alert("Cilad: " + error.message);
+      }
     }
   };
 
+  // 4. DELETE BOOKING: Shaqada lagu tirtirayo dalabaadka (Recent Bookings)
   const deleteBooking = async (id) => {
     if (window.confirm("Ma hubtaa inaad tirtirto dalabkan?")) {
-      await supabase.from('bookings').delete().eq('id', id);
-      fetchData();
+      const { error } = await supabase.from('bookings').delete().eq('id', id);
+      if (!error) {
+        fetchData();
+      }
     }
   };
 
@@ -91,12 +101,12 @@ const AdminPanel = () => {
       </div>
 
       <div style={styles.grid}>
-        {/* Qaybta Diiwaangelinta */}
+        {/* Qaybta Diiwaangelinta Darawalka */}
         <section style={styles.sectionCard}>
           <h3>➕ Diiwaangeli Darawal</h3>
           <form onSubmit={addDriver}>
-            <input type="text" placeholder="Magaca" value={newDriver.name} onChange={e => setNewDriver({...newDriver, name: e.target.value})} style={styles.input} required />
-            <input type="text" placeholder="Tel" value={newDriver.phone} onChange={e => setNewDriver({...newDriver, phone: e.target.value})} style={styles.input} required />
+            <input type="text" placeholder="Magaca Darawalka" value={newDriver.name} onChange={e => setNewDriver({...newDriver, name: e.target.value})} style={styles.input} required />
+            <input type="text" placeholder="Tel (tusaale 666...)" value={newDriver.phone} onChange={e => setNewDriver({...newDriver, phone: e.target.value})} style={styles.input} required />
             <input type="text" placeholder="Unique PIN (4 digits)" value={newDriver.pin} onChange={e => setNewDriver({...newDriver, pin: e.target.value})} style={styles.input} required maxLength="4" />
             <select value={newDriver.city} onChange={e => setNewDriver({...newDriver, city: e.target.value})} style={styles.input}>
               {somaliCities.map(c => <option key={c} value={c}>{c}</option>)}
@@ -105,7 +115,7 @@ const AdminPanel = () => {
           </form>
         </section>
 
-        {/* Liiska Darawallada */}
+        {/* Liiska Darawallada leh Show/Hide & Delete */}
         <section style={styles.sectionCard}>
           <h3>🚖 Liiska Darawallada ({drivers.length})</h3>
           <div style={styles.listContainer}>
@@ -119,7 +129,7 @@ const AdminPanel = () => {
                 </div>
                 <div style={{display: 'flex', gap: '5px'}}>
                   <button onClick={() => togglePin(d.id)} style={styles.showBtn}>{visiblePins[d.id] ? 'Hide' : 'Show'}</button>
-                  <button onClick={() => removeDriver(d.id, d.name)} style={styles.delBtnSmall}>Del</button>
+                  <button onClick={() => removeDriver(d.id, d.name)} style={styles.delBtnSmall}>Remove</button>
                 </div>
               </div>
             ))}
@@ -127,7 +137,7 @@ const AdminPanel = () => {
         </section>
       </div>
 
-      {/* TAABALKA DALABAADKA (Kii soo laabtay) */}
+      {/* TAABALKA DALABAADKA (Recent Bookings) */}
       <h3 style={{marginTop: '40px'}}>📋 Dalabaadka u dambeeyay (Recent Bookings)</h3>
       <div style={styles.tableWrapper}>
         <table style={styles.table}>
