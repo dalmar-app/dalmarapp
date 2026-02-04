@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-// Hubi in URL-ka iyo Key-gaagu ay sax yihiin
 const supabase = createClient(
   'https://nfhzzympuvilshvxsnhd.supabase.co', 
   'sb_publishable_ssWbjSHfhXpm5orvSLyKIw_SNPdJeZT'
@@ -19,9 +18,8 @@ const HomePage = () => {
 
     setLoading(true);
 
-    // 1. QABASHADA GPS-KA (AUTOMATIC)
     if (!navigator.geolocation) {
-      alert("Browser-kaagu ma taageero GPS-ka. Fadlan isticmaal Chrome ama Safari.");
+      alert("GPS-ku ma shaqaynayo!");
       setLoading(false);
       return;
     }
@@ -30,7 +28,6 @@ const HomePage = () => {
       async (position) => {
         const { latitude, longitude } = position.coords;
 
-        // 2. U DIRISTA DATABASE-KA
         const { error } = await supabase.from('bookings').insert([
           { 
             phone: phoneNumber, 
@@ -43,29 +40,58 @@ const HomePage = () => {
         ]);
 
         if (error) {
-          alert("Cilad ayaa dhacday: " + error.message);
+          alert("Cilad: " + error.message);
         } else {
-          alert("Dalabkaaga waa la gudbiyey! Darawal ayaa isla markaba kugu soo wacaya.");
+          alert("Dalabkaaga waa la diray! Bajaaj ayaa kuu socota.");
           setPhoneNumber('');
         }
         setLoading(false);
       },
       (err) => {
         setLoading(false);
-        alert("Fadlan ogolaaw GPS-ka (Location) si darawalku kuu helo!");
-      },
-      { enableHighAccuracy: true }
+        alert("Fadlan ogolaaw GPS-ka!");
+      }
     );
   };
 
   return (
     <div style={styles.container}>
+      {/* --- ANIMATION CSS --- */}
+      <style>
+        {`
+          @keyframes driveRoad {
+            0% { transform: translateX(-150%); }
+            100% { transform: translateX(150%); }
+          }
+          .road {
+            width: 100%;
+            height: 2px;
+            background: #334155;
+            position: relative;
+            margin: 40px 0;
+            overflow: hidden;
+          }
+          .bajaaj-home {
+            position: absolute;
+            font-size: 30px;
+            animation: driveRoad 5s infinite linear;
+          }
+        `}
+      </style>
+
       <header style={styles.header}>
-        <h1 style={styles.logo}>🚖 DALMAR BAJAAJ</h1>
+        <h1 style={styles.logo}>DALMAR 🛺</h1>
       </header>
 
+      {/* Qaybta Bajaajta Socota */}
+      <div className="road">
+        <div className="bajaaj-home">🛺</div>
+      </div>
+
       <div style={styles.card}>
+        <h3 style={{color: 'white', marginBottom: '10px'}}>Soo Dhawaaw!</h3>
         <p style={styles.label}>Gali nambarkaaga si lagugu soo waco</p>
+        
         <input 
           type="tel" 
           placeholder="090..." 
@@ -79,29 +105,30 @@ const HomePage = () => {
           style={{...styles.btn, backgroundColor: loading ? '#475569' : '#38bdf8'}}
           disabled={loading}
         >
-          {loading ? 'DURBA WAA LA DIRAYAA...' : 'DALBO BAJAAJ'}
+          {loading ? 'LAA DIRAYAA...' : 'DALBO BAJAAJ'}
         </button>
       </div>
 
-      <footer style={styles.footer}>
-        <p>© 2026 Dalmar App - Garowe, Somalia</p>
-      </footer>
+      <div style={{marginTop: '30px', color: '#475569', fontSize: '14px'}}>
+        <p>⚡ Degdeg iyo Amaano</p>
+      </div>
     </div>
   );
 };
 
 const styles = {
   container: { 
-    padding: '40px 20px', 
+    padding: '20px', 
     backgroundColor: '#0f172a', 
     minHeight: '100vh', 
     display: 'flex', 
     flexDirection: 'column', 
     alignItems: 'center',
+    justifyContent: 'center',
     fontFamily: 'sans-serif'
   },
-  header: { marginBottom: '40px' },
-  logo: { color: '#38bdf8', fontSize: '32px', fontWeight: 'bold' },
+  header: { textAlign: 'center' },
+  logo: { color: '#38bdf8', fontSize: '40px', fontWeight: 'bold', letterSpacing: '2px' },
   card: { 
     backgroundColor: '#1e293b', 
     padding: '30px', 
@@ -109,33 +136,32 @@ const styles = {
     width: '100%', 
     maxWidth: '400px', 
     border: '1px solid #334155',
-    textAlign: 'center'
+    textAlign: 'center',
+    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
   },
-  label: { color: '#94a3b8', marginBottom: '20px', fontSize: '16px' },
+  label: { color: '#94a3b8', marginBottom: '20px' },
   input: { 
     width: '100%', 
     padding: '15px', 
     borderRadius: '12px', 
-    border: '2px solid #334155', 
+    border: 'none', 
     backgroundColor: '#0f172a', 
     color: 'white', 
-    fontSize: '20px',
+    fontSize: '22px',
     marginBottom: '20px',
-    textAlign: 'center',
-    outline: 'none'
+    textAlign: 'center'
   },
   btn: { 
     width: '100%', 
-    padding: '16px', 
+    padding: '18px', 
     border: 'none', 
     borderRadius: '12px', 
     fontWeight: 'bold', 
     fontSize: '18px', 
     cursor: 'pointer', 
     color: '#0f172a',
-    transition: '0.3s'
-  },
-  footer: { marginTop: 'auto', color: '#475569', fontSize: '12px' }
+    textTransform: 'uppercase'
+  }
 };
 
 export default HomePage;
