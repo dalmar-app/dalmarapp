@@ -4,22 +4,23 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 // Soo dhoweynta bogagga (Imports)
 import HomePage from './components/HomePage';
 import Login from './components/Login';
-import DriverDashboard from './components/DriverDashboard'; // Hubi inuu folder-ka components ku dhex jiro
+// Halkan u fiiro dheh: "./" macnaheedu waa isla folder-ka src dhexdiisa
+import DriverDashboard from './DriverDashboard'; 
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* 1. Bogga Hore (Macmiilka) */}
+        {/* 1. Bogga Macmiilka */}
         <Route path="/" element={<HomePage />} />
 
-        {/* 2. Bogga Login-ka Darawalka */}
+        {/* 2. Bogga Login-ka */}
         <Route path="/driver-login" element={<Login />} />
 
-        {/* 3. Bogga Dashboard-ka Darawalka (Ammaan ah) */}
+        {/* 3. Bogga Dashboard-ka (Kan yaalla src) */}
         <Route path="/drivers" element={<DriverDashboard />} />
 
-        {/* 4. Haddii qofku qoro Link aan jirin, dib ugu celi HomePage */}
+        {/* 4. Dib u celin haddii link-ga la qaldo */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
