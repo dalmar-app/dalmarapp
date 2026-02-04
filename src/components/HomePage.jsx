@@ -1,89 +1,152 @@
 import React, { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  'https://nfhzzympuvilshvxsnhd.supabase.co', 
-  'sb_publishable_ssWbjSHfhXpm5orvSLyKIw_SNPdJeZT'
-);
+const supabase = createClient('https://nfhzzympuvilshvxsnhd.supabase.co', 'sb_publishable_ssWbjSHfhXpm5orvSLyKIw_SNPdJeZT');
 
 const HomePage = () => {
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [phone, setPhone] = useState('');
+  const [isOrdered, setIsOrdered] = useState(false);
 
-  const sendData = async (lat = null, lng = null) => {
-    const { error } = await supabase.from('bookings').insert([
-      { 
-        phone: phoneNumber, 
-        city: 'Garowe', 
-        lat: lat, 
-        lng: lng, 
-        status: 'pending' 
-      }
-    ]);
-
-    if (error) {
-      alert("Cilad: Database-ka ayaa diiday. Hubi SQL Policy!");
-    } else {
-      alert("Dalabkaaga waa la gudbiyey! Bajaaj ayaa kuu socota.");
-      setPhoneNumber('');
-    }
-    setLoading(false);
-  };
-
-  const handleBooking = () => {
-    if (phoneNumber.length < 7) {
-      alert("Fadlan gali nambar sax ah!");
-      return;
-    }
-
-    setLoading(true);
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => sendData(pos.coords.latitude, pos.coords.longitude),
-        (err) => {
-          console.warn("GPS waa la diiday, nambarka uun baa baxaya.");
-          sendData(); // Dir nambarka xataa haddii GPS la waayo
-        },
-        { timeout: 5000 }
-      );
-    } else {
-      sendData();
-    }
+  const handleBooking = async () => {
+    if (phone.length < 7) return alert("Fadlan nambar sax ah geli!");
+    
+    // GPS qabasho
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      await supabase.from('bookings').insert([{ 
+        phone, city: 'Garowe', status: 'pending', lat: pos.coords.latitude, lng: pos.coords.longitude 
+      }]);
+      setIsOrdered(true);
+    }, async () => {
+      // Haddii GPS la diido nambarka uun baa baxaya
+      await supabase.from('bookings').insert([{ phone, city: 'Garowe', status: 'pending' }]);
+      setIsOrdered(true);
+    });
   };
 
   return (
     <div style={styles.container}>
-      <style>{`
-        @keyframes road { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-        .moving-bajaaj { position: absolute; font-size: 30px; animation: road 4s infinite linear; }
-      `}</style>
-      <h1 style={{color: '#38bdf8'}}>DALMAR 🛺</h1>
-      <div style={{width: '100%', height: '2px', background: '#334155', position: 'relative', overflow: 'hidden', margin: '20px 0'}}>
-        <div className="moving-bajaaj">🛺</div>
+      {/* CSS Animation loogu talagalay Bajaajta socota */}
+      <style>
+        {`
+          @keyframes moveBajaaj {
+            0% { transform: translateX(-120%); }
+            100% { transform: translateX(120%); }
+          }
+          .road {
+            width: 100%;
+            height: 40px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+          }
+          .bajaaj-icon {
+            font-size: 35px;
+            position: absolute;
+            animation: moveBajaaj 12s infinite linear; /* 12s waa slow (tartiib) */
+          }
+          .line {
+            width: 100%;
+            height: 2px;
+            background: #334155;
+            position: absolute;
+            bottom: 5px;
+          }
+        `}
+      </style>
+
+      <h1 style={{color: '#38bdf8', marginBottom: '10px'}}>DALMAR 🛺</h1>
+
+      {/* Qaybta Bajaajta socota */}
+      <div className="road">
+        <div className="bajaaj-icon">🛺</div>
+        <div className="line"></div>
       </div>
-      <div style={styles.card}>
-        <p style={{color: '#94a3b8', marginBottom: '15px'}}>Gali nambarkaaga</p>
-        <input 
-          type="tel" 
-          placeholder="090..." 
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
-          style={styles.input}
-        />
-        <button onClick={handleBooking} style={styles.btn} disabled={loading}>
-          {loading ? 'LAA DIRAYAA...' : 'DALBO BAJAAJ'}
-        </button>
-      </div>
+
+      {!isOrdered ? (
+        <div style={styles.card}>
+          <p style={{marginBottom: '15px', color: '#94a3b8'}}>Gali nambarkaaga si lagugu soo waco</p>
+          <input 
+            type="tel" 
+            value={phone} 
+            onChange={(e) => setPhone(e.target.value)} 
+            style={styles.input} 
+            placeholder="090..." 
+          />
+          <button onClick={handleBooking} style={styles.btn}>DALBO BAJAAJ</button>
+        </div>
+      ) : (
+        <div style={styles.successCard}>
+          <h3>MAHADSANID! ✅</h3>
+          <p>Dalabkaaga waa la helay. Darawal ayaa kugu soo wacaya hadda.</p>
+        </div>
+      )}
+
+      <footer style={styles.footer}>
+        © 2026 Eng Ahmed Abdirisak Ali <br/>
+        <span style={{fontSize: '10px', opacity: 0.5}}>All Rights Reserved</span>
+      </footer>
     </div>
   );
 };
 
 const styles = {
-  container: { padding: '40px 20px', backgroundColor: '#0f172a', minHeight: '100vh', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' },
-  card: { backgroundColor: '#1e293b', padding: '30px', borderRadius: '20px', width: '100%', maxWidth: '350px', border: '1px solid #334155' },
-  input: { width: '100%', padding: '15px', borderRadius: '10px', border: 'none', backgroundColor: '#0f172a', color: 'white', fontSize: '20px', marginBottom: '20px', textAlign: 'center' },
-  btn: { width: '100%', padding: '15px', backgroundColor: '#38bdf8', border: 'none', borderRadius: '10px', fontWeight: 'bold', fontSize: '18px', cursor: 'pointer', color: '#0f172a' }
+  container: { 
+    padding: '40px 20px', 
+    backgroundColor: '#0f172a', 
+    minHeight: '100vh', 
+    textAlign: 'center', 
+    color: 'white',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center'
+  },
+  card: { 
+    backgroundColor: '#1e293b', 
+    padding: '30px', 
+    borderRadius: '20px', 
+    border: '1px solid #334155',
+    width: '100%',
+    maxWidth: '400px',
+    boxShadow: '0 10px 25px rgba(0,0,0,0.3)'
+  },
+  successCard: { 
+    backgroundColor: '#22c55e', 
+    padding: '30px', 
+    borderRadius: '20px',
+    width: '100%',
+    maxWidth: '400px'
+  },
+  input: { 
+    padding: '15px', 
+    width: '100%', 
+    borderRadius: '12px', 
+    marginBottom: '20px', 
+    fontSize: '20px',
+    textAlign: 'center',
+    backgroundColor: '#0f172a',
+    color: 'white',
+    border: '1px solid #334155'
+  },
+  btn: { 
+    padding: '18px', 
+    width: '100%', 
+    backgroundColor: '#38bdf8', 
+    border: 'none', 
+    borderRadius: '12px', 
+    fontWeight: 'bold',
+    fontSize: '16px',
+    cursor: 'pointer',
+    color: '#0f172a'
+  },
+  footer: { 
+    marginTop: 'auto', 
+    paddingTop: '40px',
+    color: '#475569', 
+    fontSize: '12px',
+    lineHeight: '1.6'
+  }
 };
 
 export default HomePage;
