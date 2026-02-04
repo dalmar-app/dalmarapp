@@ -8,9 +8,8 @@ const supabase = createClient(
 
 const DriverDashboard = () => {
   const [bookings, setBookings] = useState([]);
-  const [lastBookingCount, setLastBookingCount] = useState(0);
+  const [lastCount, setLastCount] = useState(0);
 
-  // 1. Shaqada soo xigashada dalabaadka
   const fetchOrders = async () => {
     const { data } = await supabase
       .from('bookings')
@@ -19,28 +18,22 @@ const DriverDashboard = () => {
       .order('created_at', { ascending: false });
     
     if (data) {
-      // 2. DHAAWAQA OGEAYSIISKA: Haddii dalab cusub yimaado
-      if (data.length > lastBookingCount) {
-        playNotificationSound();
+      if (data.length > lastCount) {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+        audio.play().catch(() => console.log("Audio play blocked"));
       }
       setBookings(data);
-      setLastBookingCount(data.length);
+      setLastCount(data.length);
     }
-  };
-
-  const playNotificationSound = () => {
-    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
-    audio.play().catch(err => console.log("Audio play blocked by browser"));
   };
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 5000); // Is-cusboonaysiin 5-tii ilbiriqsiba
+    const interval = setInterval(fetchOrders, 4000);
     return () => clearInterval(interval);
-  }, [lastBookingCount]);
+  }, [lastCount]);
 
-  // 3. Shaqada Khariidada (Google Maps)
-  const openGoogleMaps = (lat, lng) => {
+  const openMap = (lat, lng) => {
     if (!lat || !lng) {
       alert("Macmiilkan ma soo dirin GPS-kiisa!");
       return;
@@ -48,46 +41,60 @@ const DriverDashboard = () => {
     window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
   };
 
-  // 4. Shaqada Qabashada Dalabka
   const handleAccept = async (id) => {
-    const { error } = await supabase
-      .from('bookings')
-      .update({ status: 'accepted' })
-      .eq('id', id);
-    
+    const { error } = await supabase.from('bookings').update({ status: 'accepted' }).eq('id', id);
     if (!error) {
-      alert("Dalabka waad aqbashay! Fadlan u tag macmiilka.");
+      alert("Dalabka waad aqbashay!");
       fetchOrders();
     }
   };
 
   return (
     <div style={styles.body}>
-      <div style={styles.header}>
-        <h2>Driver Dashboard 🚖</h2>
-        <p style={{color: '#38bdf8'}}>{bookings.length} Dalab ayaa furan</p>
-      </div>
+      {/* CSS For Animation */}
+      <style>
+        {`
+          @keyframes moveBajaaj {
+            0% { transform: translateX(-20px); }
+            50% { transform: translateX(20px); }
+            100% { transform: translateX(-20px); }
+          }
+          .bajaaj-moving {
+            display: inline-block;
+            animation: moveBajaaj 2s infinite ease-in-out;
+            font-size: 40px;
+          }
+        `}
+      </style>
+
+      <header style={styles.header}>
+        <div className="bajaaj-moving">🛺</div>
+        <h2 style={{color: '#38bdf8', marginTop: '10px'}}>DARAWAL DASHBOARD</h2>
+        <p>{bookings.length} Dalab ayaa furan hadda</p>
+      </header>
 
       {bookings.length === 0 ? (
-        <div style={styles.noOrders}>Hadda wax dalab ah ma jiraan...</div>
+        <div style={styles.empty}>
+           <p>Ma jiro dalab cusub hadda...</p>
+           <div style={{fontSize: '50px', opacity: 0.3}}>🛺</div>
+        </div>
       ) : (
         bookings.map(order => (
-          <div key={order.id} style={styles.card}>
-            <div style={styles.info}>
-              <p><strong>📞 Tel:</strong> {order.phone}</p>
+          <div key={order.id} style={styles.orderCard}>
+            <div style={styles.details}>
+              <p><strong>📞 Nambarka:</strong> {order.phone}</p>
               <p><strong>📍 Meesha:</strong> {order.city}</p>
-              <p style={{fontSize: '11px', color: '#94a3b8'}}>Saacadda: {new Date(order.created_at).toLocaleTimeString()}</p>
+              <p style={{fontSize: '12px', color: '#94a3b8'}}>
+                Saacadda: {new Date(order.created_at).toLocaleTimeString()}
+              </p>
             </div>
 
-            <div style={styles.actionGrid}>
-              {/* BATOONKA WICITAANKA */}
+            <div style={styles.grid}>
               <a href={`tel:${order.phone}`} style={styles.callBtn}>
-                WAC MACMIILKA
+                📞 WAC MACMIILKA
               </a>
-              
-              {/* BATOONKA KHARIIDADA */}
-              <button onClick={() => openGoogleMaps(order.lat, order.lng)} style={styles.mapBtn}>
-                ARAG KHARIIDADA
+              <button onClick={() => openMap(order.lat, order.lng)} style={styles.mapBtn}>
+                🗺️ ARAG KHARIIDADA
               </button>
             </div>
 
@@ -103,14 +110,14 @@ const DriverDashboard = () => {
 
 const styles = {
   body: { padding: '20px', backgroundColor: '#0f172a', minHeight: '100vh', color: 'white', fontFamily: 'sans-serif' },
-  header: { textAlign: 'center', marginBottom: '20px' },
-  card: { backgroundColor: '#1e293b', padding: '20px', borderRadius: '15px', marginBottom: '15px', border: '1px solid #334155', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' },
-  info: { marginBottom: '15px', borderBottom: '1px solid #334155', paddingBottom: '10px' },
-  actionGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '15px' },
-  callBtn: { backgroundColor: '#22c55e', color: 'white', padding: '12px', borderRadius: '8px', textDecoration: 'none', textAlign: 'center', fontWeight: 'bold', fontSize: '12px' },
-  mapBtn: { backgroundColor: '#3b82f6', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '12px' },
-  acceptBtn: { width: '100%', padding: '12px', backgroundColor: '#38bdf8', border: 'none', borderRadius: '8px', fontWeight: 'bold', color: '#0f172a', cursor: 'pointer' },
-  noOrders: { textAlign: 'center', marginTop: '50px', color: '#94a3b8' }
+  header: { textAlign: 'center', marginBottom: '30px' },
+  orderCard: { backgroundColor: '#1e293b', padding: '20px', borderRadius: '15px', marginBottom: '20px', border: '1px solid #334155', boxShadow: '0 4px 15px rgba(0,0,0,0.3)' },
+  details: { marginBottom: '15px', fontSize: '18px' },
+  grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '15px' },
+  callBtn: { backgroundColor: '#22c55e', color: 'white', padding: '15px', borderRadius: '10px', textDecoration: 'none', textAlign: 'center', fontWeight: 'bold', fontSize: '14px' },
+  mapBtn: { backgroundColor: '#3b82f6', color: 'white', border: 'none', padding: '15px', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' },
+  acceptBtn: { width: '100%', padding: '15px', backgroundColor: '#38bdf8', border: 'none', borderRadius: '10px', fontWeight: 'bold', color: '#0f172a', cursor: 'pointer' },
+  empty: { textAlign: 'center', marginTop: '100px', color: '#475569' }
 };
 
 export default DriverDashboard;
