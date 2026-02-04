@@ -1,12 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-// Faylasha ku jira components
+// 1. Maadaama faylkaagu uu folder-ka dhexdiisa ku jiro:
 import HomePage from './components/HomePage';
 import Login from './components/Login';
-
-// Faylka DriverDashboard wuxuu yaallaa isla src dhexdiisa (bannaanka)
-import DriverDashboard from './DriverDashboard'; 
+import DriverDashboard from './components/DriverDashboard'; // KU DAR HADDII UU KA MAQAN YAHAY
 
 function App() {
   return (
@@ -16,7 +14,7 @@ function App() {
         <Route path="/driver-login" element={<Login />} />
         <Route path="/drivers" element={<DriverDashboard />} />
         
-        {/* Haddii link-ga la qaldo, dib u celi */}
+        {/* Haddii qofku link qaldan qoro */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
