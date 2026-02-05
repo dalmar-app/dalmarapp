@@ -2,74 +2,66 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 
-// Hubi in xogtan ay la mid tahay tan Admin-kaaga
-const supabase = createClient(
-  'https://nfhzzympuvilshvxsnhd.supabase.co', 
-  'sb_publishable_ssWbjSHfhXpm5orvSLyKIw_SNPdJeZT'
-);
+const supabase = createClient('https://nfhzzympuvilshvxsnhd.supabase.co', 'sb_publishable_ssWbjSHfhXpm5orvSLyKIw_SNPdJeZT');
 
-const Login = () => {
-  const [pin, setPin] = useState('');
-  const [loading, setLoading] = useState(false);
+const UnifiedLogin = () => {
+  const [userInput, setUserInput] = useState(''); // Magaca ama PIN
+  const [pinInput, setPinInput] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleAuth = async (e) => {
     e.preventDefault();
-    setLoading(true);
 
-    // 1. Halkan waxaan ka baaraynaa Supabase haddii PIN-ku jiro
-    const { data, error } = await supabase
+    // 1. Hubi haddii uu yahay Admin
+    if (userInput.toLowerCase() === 'ahmed' && pinInput === '2003') {
+      localStorage.setItem('adminAuth', 'true');
+      return navigate('/admin-panel');
+    }
+
+    // 2. Hubi haddii uu yahay Darawal (ka raadi Database-ka)
+    const { data: driver, error } = await supabase
       .from('drivers')
       .select('*')
-      .eq('pin', pin)
+      .eq('pin', pinInput)
       .single();
 
-    if (data) {
-      // Haddii PIN-ku sax yahay
+    if (driver) {
       localStorage.setItem('driverAuth', 'true');
-      localStorage.setItem('driverCity', data.city); // Magaalada darawalka ayuu xasuusanayaa
-      navigate('/drivers');
+      localStorage.setItem('driverName', driver.name);
+      navigate('/driver-dashboard');
     } else {
-      // Haddii PIN-ka la waayo ama uu khaldan yahay
-      alert("PIN-ka darawalku waa khaldan yahay!");
+      alert("PIN-ka ama Magaca waa khaldan yahay!");
     }
-    setLoading(false);
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.loginBox}>
-        <h1 style={{color: '#38bdf8', fontSize: '24px'}}>DALMAR 🛺</h1>
-        <h2 style={{fontSize: '18px', marginBottom: '20px'}}>DRIVER LOGIN</h2>
-        
-        <form onSubmit={handleLogin}>
+    <div style={{ height: '100vh', backgroundColor: '#0f172a', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div style={{ backgroundColor: '#1e293b', padding: '40px', borderRadius: '25px', textAlign: 'center', border: '1px solid #334155', width: '320px' }}>
+        <h2 style={{ color: '#38bdf8' }}>🔐 LOGIN</h2>
+        <p style={{ color: '#94a3b8', fontSize: '14px' }}>Gali macluumaadkaaga</p>
+        <form onSubmit={handleAuth}>
           <input 
-            type="text" 
-            placeholder="Gali PIN-kaaga (4 Digits)" 
-            value={pin}
-            onChange={(e) => setPin(e.target.value)} 
+            type="text" placeholder="Magaca (Hadii aad Admin tahay)" 
+            value={userInput} onChange={(e) => setUserInput(e.target.value)} 
             style={styles.input} 
-            maxLength="4"
-            required
-          /> 
-          <button type="submit" style={styles.btn} disabled={loading}>
-            {loading ? "Checking..." : "GALA"}
-          </button>
+          />
+          <input 
+            type="password" placeholder="PIN-kaaga" 
+            value={pinInput} onChange={(e) => setPinInput(e.target.value)} 
+            style={styles.input} required 
+          />
+          <button type="submit" style={styles.btn}>GASHLO SYSTEM-KA</button>
         </form>
-        
-        <p style={{fontSize: '12px', marginTop: '15px', color: '#94a3b8'}}>
-          Haddii aad PIN-ka qalday la xiriir Admin-ka.
-        </p>
       </div>
     </div>
   );
 };
 
 const styles = {
-  container: { backgroundColor: '#0f172a', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'white', textAlign: 'center' },
-  loginBox: { padding: '30px', border: '1px solid #334155', borderRadius: '25px', backgroundColor: '#1e293b', width: '320px' },
-  input: { padding: '15px', borderRadius: '12px', marginBottom: '15px', width: '100%', border: '1px solid #334155', backgroundColor: '#0f172a', color: 'white', textAlign: 'center', fontSize: '18px' },
-  btn: { padding: '15px', backgroundColor: '#38bdf8', border: 'none', borderRadius: '12px', fontWeight: 'bold', width: '100%', cursor: 'pointer', color: '#0f172a' }
+  input: { width: '100%', padding: '12px', marginBottom: '15px', borderRadius: '8px', border: 'none', backgroundColor: '#0f172a', color: 'white', boxSizing: 'border-box' },
+  btn: { width: '100%', padding: '12px', backgroundColor: '#38bdf8', color: '#0f172a', fontWeight: 'bold', borderRadius: '8px', border: 'none', cursor: 'pointer' }
 };
 
-export default Login;
+export default UnifiedLogin;
+
+
