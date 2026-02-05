@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 const supabase = createClient('https://nfhzzympuvilshvxsnhd.supabase.co', 'sb_publishable_ssWbjSHfhXpm5orvSLyKIw_SNPdJeZT');
 
 const UnifiedLogin = () => {
-  const [userInput, setUserInput] = useState(''); // Magaca ama PIN
+  const [userInput, setUserInput] = useState(''); 
   const [pinInput, setPinInput] = useState('');
   const navigate = useNavigate();
 
@@ -18,7 +18,7 @@ const UnifiedLogin = () => {
       return navigate('/admin-panel');
     }
 
-    // 2. Hubi haddii uu yahay Darawal (ka raadi Database-ka)
+    // 2. Hubi haddii uu yahay Darawal
     const { data: driver, error } = await supabase
       .from('drivers')
       .select('*')
@@ -26,7 +26,16 @@ const UnifiedLogin = () => {
       .single();
 
     if (driver) {
+      // --- HALKAN AYAA ISBEDELKA LAGU DARAY ---
+      if (driver.is_paid === false) {
+        alert("ACCOUNT-KAAGA WAA XIRAN YAHAY! ❌\nFadlan bixi lacagta ka dibna la xiriir maamulka.");
+        return; // Halkan ayuu ku joogsanayaa, Dashboard-ka ma geynayo
+      }
+      // ---------------------------------------
+
       localStorage.setItem('driverAuth', 'true');
+      // Waxaan u baahanahay inaan xogta oo dhan keydino si Dashboard-ku u ogaado darawalka
+      localStorage.setItem('dalmar_driver', JSON.stringify(driver));
       localStorage.setItem('driverName', driver.name);
       navigate('/driver-dashboard');
     } else {
@@ -63,5 +72,3 @@ const styles = {
 };
 
 export default UnifiedLogin;
-
-
