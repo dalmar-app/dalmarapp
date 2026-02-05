@@ -13,7 +13,7 @@ const AdminPanel = () => {
   
   const [bookings, setBookings] = useState([]);
   const [drivers, setDrivers] = useState([]);
-  const [newDriver, setNewDriver] = useState({ name: '', phone: '', pin: '', city: 'Garowe' });
+  const [newDriver, setNewDriver] = useState({ name: '', phone: '', pin: '', city: 'Garowe', is_paid: false });
   const [visiblePins, setVisiblePins] = useState({});
 
   const somaliCities = ["Garowe", "Galkacyo", "Muqdisho", "Beledweyne", "Kismaayo", "Baydhabo", "Hargeisa", "Borama", "Eyl"];
@@ -27,7 +27,6 @@ const AdminPanel = () => {
 
   const handleAdminLogin = (e) => {
     e.preventDefault();
-    // 1. LOGIN FIX: Ma kala saarayso xarfaha waaweyn iyo kuwa yar
     if (adminUser.toLowerCase() === "ahmed" && adminPin === "2003") {
       setIsAdminLoggedIn(true);
       fetchData();
@@ -40,41 +39,46 @@ const AdminPanel = () => {
     setVisiblePins(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  // --- SHAQADA CUSUB: LACAGTA ---
+  const togglePaymentStatus = async (id, currentStatus) => {
+    const { error } = await supabase
+      .from('drivers')
+      .update({ is_paid: !currentStatus })
+      .eq('id', id);
+    
+    if (!error) {
+      fetchData(); // Dib u soo cusboonaysii liiska
+    } else {
+      alert("Cilad dhacday: " + error.message);
+    }
+  };
+
   const addDriver = async (e) => {
     e.preventDefault();
-    // 2. UNIQUE PIN: Hubi haddii PIN-kaas darawal kale hore u lahaa
     const { data: existing } = await supabase.from('drivers').select('pin').eq('pin', newDriver.pin).single();
     if (existing) {
-      alert("PIN-kan hore ayaa loo isticmaalay! Fadlan darawalka u samee PIN ka duwan.");
+      alert("PIN-kan hore ayaa loo isticmaalay!");
       return;
     }
     const { error } = await supabase.from('drivers').insert([newDriver]);
     if (!error) {
       alert("Darawal cusub waa la kaydiyey!");
-      setNewDriver({ name: '', phone: '', pin: '', city: 'Garowe' });
+      setNewDriver({ name: '', phone: '', pin: '', city: 'Garowe', is_paid: false });
       fetchData();
     }
   };
 
-  // 3. REMOVE DRIVER: Shaqada lagu tirtirayo darawalka
   const removeDriver = async (id, name) => {
     if (window.confirm(`Ma hubtaa inaad gabi ahaanba tirtirto darawal ${name}?`)) {
       const { error } = await supabase.from('drivers').delete().eq('id', id);
-      if (!error) {
-        fetchData();
-      } else {
-        alert("Cilad: " + error.message);
-      }
+      if (!error) fetchData();
     }
   };
 
-  // 4. DELETE BOOKING: Shaqada lagu tirtirayo dalabaadka (Recent Bookings)
   const deleteBooking = async (id) => {
     if (window.confirm("Ma hubtaa inaad tirtirto dalabkan?")) {
       const { error } = await supabase.from('bookings').delete().eq('id', id);
-      if (!error) {
-        fetchData();
-      }
+      if (!error) fetchData();
     }
   };
 
@@ -101,7 +105,6 @@ const AdminPanel = () => {
       </div>
 
       <div style={styles.grid}>
-        {/* Qaybta Diiwaangelinta Darawalka */}
         <section style={styles.sectionCard}>
           <h3>➕ Diiwaangeli Darawal</h3>
           <form onSubmit={addDriver}>
@@ -115,21 +118,28 @@ const AdminPanel = () => {
           </form>
         </section>
 
-        {/* Liiska Darawallada leh Show/Hide & Delete */}
         <section style={styles.sectionCard}>
           <h3>🚖 Liiska Darawallada ({drivers.length})</h3>
           <div style={styles.listContainer}>
             {drivers.map(d => (
               <div key={d.id} style={styles.listItem}>
                 <div style={{flex: 1}}>
-                  <p style={{margin: 0, fontWeight: 'bold'}}>{d.name}</p>
+                  <p style={{margin: 0, fontWeight: 'bold'}}>
+                    {d.name} {d.is_paid ? '✅' : '❌'}
+                  </p>
                   <p style={{margin: 0, fontSize: '12px', color: '#94a3b8'}}>
-                    PIN: {visiblePins[d.id] ? <span style={{color: '#38bdf8', fontWeight: 'bold'}}>{d.pin}</span> : "****"} | {d.city}
+                    PIN: {visiblePins[d.id] ? <span style={{color: '#38bdf8', fontWeight: 'bold'}}>{d.pin}</span> : "****"} | {d.is_paid ? 'Paid' : 'Unpaid'}
                   </p>
                 </div>
-                <div style={{display: 'flex', gap: '5px'}}>
+                <div style={{display: 'flex', gap: '5px', alignItems: 'center'}}>
+                  <button 
+                    onClick={() => togglePaymentStatus(d.id, d.is_paid)} 
+                    style={{...styles.payBtn, backgroundColor: d.is_paid ? '#ef4444' : '#22c55e'}}
+                  >
+                    {d.is_paid ? 'Block' : 'Activate'}
+                  </button>
                   <button onClick={() => togglePin(d.id)} style={styles.showBtn}>{visiblePins[d.id] ? 'Hide' : 'Show'}</button>
-                  <button onClick={() => removeDriver(d.id, d.name)} style={styles.delBtnSmall}>Remove</button>
+                  <button onClick={() => removeDriver(d.id, d.name)} style={styles.delBtnSmall}>Del</button>
                 </div>
               </div>
             ))}
@@ -137,8 +147,7 @@ const AdminPanel = () => {
         </section>
       </div>
 
-      {/* TAABALKA DALABAADKA (Recent Bookings) */}
-      <h3 style={{marginTop: '40px'}}>📋 Dalabaadka u dambeeyay (Recent Bookings)</h3>
+      <h3 style={{marginTop: '40px'}}>📋 Dalabaadka u dambeeyay</h3>
       <div style={styles.tableWrapper}>
         <table style={styles.table}>
           <thead>
@@ -175,8 +184,9 @@ const styles = {
   input: { width: '100%', padding: '12px', marginBottom: '10px', borderRadius: '8px', border: 'none', backgroundColor: '#0f172a', color: 'white', boxSizing: 'border-box' },
   btn: { width: '100%', padding: '12px', backgroundColor: '#38bdf8', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', color: '#0f172a' },
   logoutBtn: { backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer' },
-  listContainer: { maxHeight: '300px', overflowY: 'auto', marginTop: '10px' },
-  listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid #334155' },
+  listContainer: { maxHeight: '400px', overflowY: 'auto', marginTop: '10px' },
+  listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #334155' },
+  payBtn: { color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold' },
   showBtn: { backgroundColor: '#475569', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', fontSize: '11px' },
   delBtnSmall: { backgroundColor: 'transparent', color: '#ef4444', border: '1px solid #ef4444', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', fontSize: '11px' },
   tableWrapper: { overflowX: 'auto', marginTop: '10px', backgroundColor: '#1e293b', borderRadius: '15px', border: '1px solid #334155' },
