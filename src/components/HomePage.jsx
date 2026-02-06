@@ -53,7 +53,7 @@ const HomePage = () => {
         setIsInstalled(true);
       }
     } else {
-      alert("Si aad u shubato: Google Chrome ka dooro 'Install App' ama 'Add to Home Screen'.");
+      alert("Si aad u shubato: Browser-ka (Chrome) ka dooro 'Install App'.");
     }
   };
 
@@ -77,11 +77,18 @@ const HomePage = () => {
     await supabase.from('bookings').insert([{ phone, city: 'Garowe', status: 'pending' }]); 
   }; 
 
+  // QAYBTII AAD II QAYLISAY: ADMIN & DRIVER CLICKS
   const handleNameClick = () => { 
     const newCount = clickCount + 1; 
     setClickCount(newCount); 
-    if (newCount === 3) { setIsAdmin(true); alert("Admin Mode On!"); } 
-    if (newCount === 5) navigate('/driver-login'); 
+
+    if (newCount === 3) { 
+      setIsAdmin(true); 
+      alert("Admin Mode: Hadda sawirka waad beddeli kartaa! ✅"); 
+    } 
+    if (newCount === 5) { 
+      navigate('/driver-login'); 
+    } 
   }; 
 
   return ( 
@@ -113,10 +120,15 @@ const HomePage = () => {
           <label className="profile-img-container"> 
             {isAdmin && <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />} 
             <img src={profileImage || "https://avatars.githubusercontent.com/u/197945084?v=4"} alt="Eng Ahmed" className="profile-img" /> 
-            {isAdmin && <div className="admin-overlay">BEDDEL SAWIRKA</div>} 
+            {isAdmin && <div className="admin-overlay">GUJI SI AAD U BEDDESHO</div>} 
           </label> 
         </div> 
-        <h1 onClick={handleNameClick} style={styles.name}>Eng Ahmed Abdirisak Ali</h1> 
+        
+        {/* HALKAN AYAY CLICKS-KU KA SHAQAYNAYAAN */}
+        <h1 onClick={handleNameClick} style={styles.name}>
+          Eng Ahmed Abdirisak Ali
+        </h1> 
+        
         <p style={styles.title}>Fullstack Developer (Junior)</p> 
         <div style={styles.bioCard}> 
           <p style={styles.bioText}>App-ka <strong>DALMAR</strong> waa xal casri ah oo u adeegaya magaalada Garowe. 8 bilood oo shaqo adag ah ka dib, waa diyaar!</p> 
@@ -129,6 +141,8 @@ const HomePage = () => {
             <h2 style={{color: '#38bdf8', marginBottom: '15px'}}>Dalbo Bajaaj</h2> 
             <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} style={styles.input} placeholder="Nambarkaaga..." /> 
             <button onClick={handleBooking} style={styles.btn}>GUD BI DALABKA</button> 
+            
+            {/* INSTALL BUTTON */}
             {!isInstalled && (
               <button onClick={handleInstallClick} style={styles.installBtn}>📥 INSTALL APP (DIRECT)</button>
             )}
@@ -145,7 +159,7 @@ const styles = {
   container: { padding: '40px 20px', backgroundColor: '#020617', minHeight: '100vh', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: 'sans-serif' }, 
   heroSection: { textAlign: 'center', marginBottom: '30px', display: 'flex', flexDirection: 'column', alignItems: 'center' }, 
   imageWrapper: { marginBottom: '20px' }, 
-  name: { fontSize: '26px', fontWeight: 'bold', cursor: 'pointer' }, 
+  name: { fontSize: '26px', fontWeight: 'bold', cursor: 'pointer', userSelect: 'none' }, 
   title: { color: '#38bdf8', fontSize: '14px', marginTop: '5px' }, 
   bioCard: { backgroundColor: '#0f172a', padding: '15px', borderRadius: '15px', marginTop: '20px', maxWidth: '400px', border: '1px solid #1e293b' }, 
   bioText: { color: '#94a3b8', fontSize: '15px' }, 
