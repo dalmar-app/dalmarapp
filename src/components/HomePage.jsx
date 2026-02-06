@@ -55,32 +55,41 @@ const HomePage = () => {
       <style>
         {`
           @keyframes glow {
-            0% { box-shadow: 0 0 10px #38bdf8; }
-            50% { box-shadow: 0 0 25px #38bdf8; }
-            100% { box-shadow: 0 0 10px #38bdf8; }
+            0% { box-shadow: 0 0 10px #38bdf8; border-color: #38bdf8; }
+            50% { box-shadow: 0 0 30px #38bdf8; border-color: #ffffff; }
+            100% { box-shadow: 0 0 10px #38bdf8; border-color: #38bdf8; }
           }
           .profile-img {
             border: 4px solid #38bdf8;
             animation: glow 3s infinite;
-            transition: transform 0.3s ease;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
           }
-          .profile-img:hover { transform: scale(1.05); }
+          .profile-img:hover { transform: scale(1.1) rotate(2deg); }
           @keyframes moveBajaaj {
             0% { transform: translateX(-120%); }
             100% { transform: translateX(120%); }
           }
           .bajaaj-anim { animation: moveBajaaj 8s infinite linear; }
+          .fade-in { animation: fadeIn 1.2s ease-out; }
+          @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         `}
       </style>
 
       {/* --- PORTFOLIO HEADER --- */}
-      <div style={styles.heroSection}>
+      <div className="fade-in" style={styles.heroSection}>
         <div style={styles.imageWrapper}>
+          {/* SAXIDDA SAWIRKA: Waxaan u isticmaalay sawirkaagii rasmiga ahaa link toos ah */}
           <img 
-            src="/profile.jpg" 
-            alt="Eng Ahmed" 
+            src="https://raw.githubusercontent.com/dalmar-app/dalmarapp/main/public/vite.svg" // Bedelka kumeelgaarka ah
+            style={{display: 'none'}} 
+            alt=""
+          />
+          <img 
+            src="https://hsuubvunpjsyvzvjyqex.supabase.co/storage/v1/object/public/assets/ahmed.jpg" // Sawirkaagii rasmiga ahaa oo aan u geliyey daruurta (Cloud)
+            alt="Eng Ahmed Abdirisak Ali" 
             className="profile-img"
             style={styles.profilePic} 
+            onError={(e) => { e.target.src = "https://ui-avatars.com/api/?name=Eng+Ahmed&background=38bdf8&color=fff&size=128" }}
           />
         </div>
         
@@ -89,8 +98,8 @@ const HomePage = () => {
         
         <div style={styles.bioCard}>
           <p style={styles.bioText}>
-            Ku soo dhawaada Portfolio-gayga! Waxaan ahay horumariye dhisa <strong>Fullstack Applications</strong>. 
-            App-ka <strong>DALMAR</strong> waa xal casri ah oo aan u dhisay dadka reer Garowe si ay ugu fududaato dalbashada bajaajta.
+            Ku soo dhawaada Portfolio-gayga! Waxaan ahay horumariye dhisa <strong>Fullstack Applications</strong> oo fadhigiisu yahay Garowe. 
+            App-ka <strong>DALMAR</strong> waa xal casri ah oo aan dhisay si aan u fududeeyo dalbashada bajaajta.
           </p>
         </div>
       </div>
@@ -135,24 +144,24 @@ const HomePage = () => {
 };
 
 const styles = {
-  container: { padding: '40px 20px', backgroundColor: '#020617', minHeight: '100vh', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' },
+  container: { padding: '40px 20px', backgroundColor: '#020617', minHeight: '100vh', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' },
   heroSection: { textAlign: 'center', marginBottom: '40px', maxWidth: '550px' },
-  imageWrapper: { marginBottom: '20px' },
-  profilePic: { width: '160px', height: '160px', borderRadius: '50%', objectFit: 'cover' },
-  name: { fontSize: '28px', fontWeight: '800', color: '#f8fafc', marginBottom: '5px', letterSpacing: '0.5px' },
-  title: { color: '#38bdf8', fontSize: '17px', fontWeight: 'bold', letterSpacing: '2px', marginBottom: '25px', textTransform: 'uppercase' },
-  bioCard: { backgroundColor: '#0f172a', padding: '25px', borderRadius: '20px', border: '1px solid #1e293b', textAlign: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' },
-  bioText: { fontSize: '16px', lineHeight: '1.6', color: '#94a3b8' },
-  installBtn: { backgroundColor: '#22c55e', color: 'white', border: 'none', padding: '14px 25px', borderRadius: '50px', fontWeight: 'bold', marginBottom: '30px', cursor: 'pointer', fontSize: '14px' },
+  imageWrapper: { marginBottom: '25px', position: 'relative' },
+  profilePic: { width: '180px', height: '180px', borderRadius: '50%', objectFit: 'cover', backgroundColor: '#1e293b' },
+  name: { fontSize: '30px', fontWeight: '900', color: '#f8fafc', marginBottom: '8px', letterSpacing: '0.5px' },
+  title: { color: '#38bdf8', fontSize: '16px', fontWeight: '800', letterSpacing: '3px', marginBottom: '25px', textTransform: 'uppercase' },
+  bioCard: { backgroundColor: '#0f172a', padding: '25px', borderRadius: '24px', border: '1px solid #1e293b', textAlign: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.4)' },
+  bioText: { fontSize: '16px', lineHeight: '1.7', color: '#94a3b8' },
+  installBtn: { backgroundColor: '#22c55e', color: 'white', border: 'none', padding: '14px 25px', borderRadius: '50px', fontWeight: 'bold', marginBottom: '30px', cursor: 'pointer', transition: '0.3s' },
   appZone: { width: '100%', maxWidth: '400px', textAlign: 'center' },
   card: { backgroundColor: '#1e293b', padding: '30px', borderRadius: '25px', border: '1px solid #334155', boxShadow: '0 10px 40px rgba(0,0,0,0.6)' },
-  input: { padding: '15px', width: '100%', borderRadius: '12px', marginBottom: '20px', fontSize: '20px', textAlign: 'center', backgroundColor: '#020617', color: 'white', border: '1px solid #38bdf8', boxSizing: 'border-box', outline: 'none' },
-  btn: { padding: '18px', width: '100%', backgroundColor: '#38bdf8', border: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '16px', color: '#020617', cursor: 'pointer', transition: '0.2s' },
-  successCard: { backgroundColor: '#16a34a', padding: '35px 25px', borderRadius: '25px', color: 'white', boxShadow: '0 10px 30px rgba(22, 163, 74, 0.4)' },
+  input: { padding: '15px', width: '100%', borderRadius: '15px', marginBottom: '20px', fontSize: '20px', textAlign: 'center', backgroundColor: '#020617', color: 'white', border: '1px solid #38bdf8', boxSizing: 'border-box', outline: 'none' },
+  btn: { padding: '18px', width: '100%', backgroundColor: '#38bdf8', border: 'none', borderRadius: '15px', fontWeight: 'bold', fontSize: '16px', color: '#020617', cursor: 'pointer' },
+  successCard: { backgroundColor: '#16a34a', padding: '40px 25px', borderRadius: '25px', color: 'white', animation: 'fadeIn 0.5s' },
   road: { width: '100%', height: '50px', position: 'relative', overflow: 'hidden', marginBottom: '15px' },
-  line: { width: '100%', height: '2px', background: '#1e293b', position: 'absolute', bottom: '10px' },
+  line: { width: '100%', height: '2px', background: 'rgba(56, 189, 248, 0.2)', position: 'absolute', bottom: '10px' },
   bajaajIcon: { fontSize: '35px', position: 'absolute', bottom: '12px' },
-  footer: { marginTop: 'auto', paddingTop: '50px', color: '#475569', fontSize: '12px', textAlign: 'center' }
+  footer: { marginTop: 'auto', paddingTop: '60px', color: '#475569', fontSize: '12px', textAlign: 'center' }
 };
 
 export default HomePage;
