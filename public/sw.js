@@ -1,8 +1,8 @@
-// public/sw.js
-self.addEventListener('install', (event) => {
-  console.log('Service Worker installed');
+const CACHE_NAME = 'dalmar-cache-v1';
+self.addEventListener('install', (e) => {
+  e.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(['/'])));
 });
 
-self.addEventListener('fetch', (event) => {
-  // Waxba ma qabanayo laakiin waa lagama maarmaan
+self.addEventListener('fetch', (e) => {
+  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
 });
