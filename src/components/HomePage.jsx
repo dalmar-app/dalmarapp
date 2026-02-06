@@ -10,8 +10,8 @@ const HomePage = () => {
   const [clickCount, setClickCount] = useState(0);
   const navigate = useNavigate();
 
-  // HALKAN EEG: Waxaan isticmaalnay URL-ka sawirkaaga ee GitHub
-  const profileImage = "https://avatars.githubusercontent.com/u/197945084?v=4";
+  // Waxaan ku daray ?t=123 si browser-ka uusan u isticmaalin sawirkii hore
+  const profileImage = "https://raw.githubusercontent.com/dalmar-app/dalmarapp/main/508889925_1258091975660731_2957369699573331185_n.jpg?t=" + Date.now();
 
   const handleBooking = async () => {
     if (phone.length < 7) return alert("Fadlan nambar sax ah geli!");
@@ -28,25 +28,39 @@ const HomePage = () => {
             50% { box-shadow: 0 0 25px #38bdf8; border-color: #ffffff; }
             100% { box-shadow: 0 0 10px #38bdf8; border-color: #38bdf8; }
           }
-          .profile-img {
+          .profile-img-container {
             width: 180px;
             height: 180px;
             border-radius: 50%;
             border: 4px solid #38bdf8;
-            object-fit: cover;
+            overflow: hidden;
             animation: glow 3s infinite;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #0f172a;
+          }
+          .profile-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
           }
         `}
       </style>
 
       <div style={styles.heroSection}>
         <div style={styles.imageWrapper}>
-          {/* SAWIRKAAGA OO DHAMMAYSTIRAN */}
-          <img 
-            src={profileImage} 
-            alt="Eng Ahmed" 
-            className="profile-img" 
-          />
+          <div className="profile-img-container">
+            <img 
+              src={profileImage} 
+              alt="Eng Ahmed" 
+              className="profile-img" 
+              onError={(e) => {
+                // Haddii sawirku soo baxi waayo, tijaabi link-gan kale ee GitHub Avatar ah
+                e.target.src = "https://avatars.githubusercontent.com/u/197945084?v=4";
+              }}
+            />
+          </div>
         </div>
         
         <h1 onClick={() => {
@@ -58,7 +72,7 @@ const HomePage = () => {
         <div style={styles.bioCard}>
           <p style={styles.bioText}>
             Ku soo dhawaada Portfolio-gayga! Waxaan ahay horumariye dhisa <strong>Fullstack Applications</strong>. 
-            App-ka <strong>DALMAR</strong> waa xal casri ah oo aan dhisay.
+            App-ka <strong>DALMAR</strong> waa xal casri ah oo aan dhisay si aan u fududeeyo dalbashada bajaajta ee magaalada Garowe.
           </p>
         </div>
       </div>
@@ -79,7 +93,7 @@ const HomePage = () => {
         ) : (
           <div style={styles.successCard}>
             <h3>MAHADSANID! ✅</h3>
-            <p>Dalabkaaga waa la gudbiyay.</p>
+            <p>Dalabkaaga waa la gudbiyay, darawal ayaa kusoo wacaya.</p>
           </div>
         )}
       </div>
@@ -90,7 +104,7 @@ const HomePage = () => {
 const styles = {
   container: { padding: '40px 20px', backgroundColor: '#020617', minHeight: '100vh', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: 'sans-serif' },
   heroSection: { textAlign: 'center', marginBottom: '30px' },
-  imageWrapper: { marginBottom: '20px' },
+  imageWrapper: { marginBottom: '20px', display: 'flex', justifyContent: 'center' },
   name: { fontSize: '26px', fontWeight: 'bold', cursor: 'pointer' },
   title: { color: '#38bdf8', fontSize: '14px', letterSpacing: '1px', marginTop: '5px' },
   bioCard: { backgroundColor: '#0f172a', padding: '15px', borderRadius: '15px', marginTop: '20px', maxWidth: '400px', border: '1px solid #1e293b' },
