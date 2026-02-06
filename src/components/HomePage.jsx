@@ -12,16 +12,24 @@ const HomePage = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
-  // 1. Soo qaado sawirka qof kasta ha arkee markuu bogga soo galo
+  // 1. Soo qaado sawirka markasta oo bogga la refresh-gareeyo
   useEffect(() => {
     const fetchProfile = async () => {
-      let { data } = await supabase.from('profiles').select('image_url').single();
-      if (data) setProfileImage(data.image_url);
+      // Waxaan u sheegaynaa inuu soo qabto sawirka qofka magaciisu yahay 'Eng Ahmed'
+      let { data, error } = await supabase
+        .from('profiles')
+        .select('image_url')
+        .eq('owner_name', 'Eng Ahmed')
+        .single();
+      
+      if (data && data.image_url) {
+        setProfileImage(data.image_url);
+      }
     };
     fetchProfile();
   }, []);
 
-  // 2. Shaqada sawirka beddelaysa (Adiga kaliya ayaa ka soo upload-gareynaya computer-kaaga)
+  // 2. Shaqada sawirka beddelaysa (Permanent Save)
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -29,11 +37,22 @@ const HomePage = () => {
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64Image = reader.result;
-      setProfileImage(base64Image); // Isla markiiba u tusi qofka
       
-      // Ku kaydi Database-ka si dadka kale u arkaan
-      await supabase.from('profiles').update({ image_url: base64Image }).eq('owner_name', 'Eng Ahmed');
-      alert("Sawirka waa la xareeyay! ✅");
+      // Marka hore u tusi isticmaalaha (Instant UI update)
+      setProfileImage(base64Image); 
+      
+      // DATABASE-KA KU KAYDI (Halkan ayaa muhiim ah)
+      const { error } = await supabase
+        .from('profiles')
+        .update({ image_url: base64Image })
+        .eq('owner_name', 'Eng Ahmed'); // Hubi inuu magacaan ku jiro SQL-kaaga
+
+      if (error) {
+        console.error("Error saving image:", error);
+        alert("Cilad baa dhacday markii la kaydinayay!");
+      } else {
+        alert("Sawirkaaga si joogto ah ayaa loo kaydiyay! ✅");
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -42,6 +61,21 @@ const HomePage = () => {
     if (phone.length < 7) return alert("Fadlan nambar sax ah geli!");
     setIsOrdered(true);
     await supabase.from('bookings').insert([{ phone, city: 'Garowe', status: 'pending' }]);
+  };
+
+  const handleNameClick = () => {
+    const newCount = clickCount + 1;
+    setClickCount(newCount);
+    
+    // 3 jeer = Admin Mode (Beddelka sawirka ayaa soo baxaya)
+    if (newCount === 3) {
+      setIsAdmin(true);
+      alert("Admin Mode: Hadda sawirka waad beddeli kartaa!");
+    }
+    // 5 jeer = Dashboard-ka darawallada
+    if (newCount === 5) {
+      navigate('/driver-login');
+    }
   };
 
   return (
@@ -79,15 +113,15 @@ const HomePage = () => {
             color: #38bdf8;
             width: 100%;
             font-size: 11px;
-            padding: 4px 0;
+            padding: 8px 0;
             text-align: center;
+            font-weight: bold;
           }
         `}
       </style>
 
       <div style={styles.heroSection}>
         <div style={styles.imageWrapper}>
-          {/* GUJI SAWIRKA SI AAD U BEDDESHO (Kaliya haddii aad Admin tahay) */}
           <label className="profile-img-container">
             {isAdmin && <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />}
             <img 
@@ -95,15 +129,13 @@ const HomePage = () => {
               alt="Eng Ahmed" 
               className="profile-img" 
             />
-            {isAdmin && <div className="admin-overlay">BEDDEL SAWIRKA</div>}
+            {isAdmin && <div className="admin-overlay">GUJI SI AAD U BEDDESHO</div>}
           </label>
         </div>
         
-        <h1 onClick={() => {
-          setClickCount(prev => prev + 1);
-          if (clickCount + 1 === 3) setIsAdmin(true); // 3-jeer markaad ku dhufato magaca, Upload ayaa kuu furmaya
-          if (clickCount + 1 === 5) navigate('/driver-login'); // 5-jeer markaad ku dhufato, Driver Login
-        }} style={styles.name}>Eng Ahmed Abdirisak Ali</h1>
+        <h1 onClick={handleNameClick} style={styles.name}>
+          Eng Ahmed Abdirisak Ali
+        </h1>
         <p style={styles.title}>Fullstack Developer (Junior)</p>
         
         <div style={styles.bioCard}>
