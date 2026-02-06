@@ -1,24 +1,23 @@
 {
   "short_name": "Dalmar",
   "name": "Dalmar App - Bajaaj Service",
-  "description": "Adeegga dalbashada Bajaajta ee Garowe",
+  "description": "8 Bilood oo shaqo ah: Dalbashada Bajaajta Garowe",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "theme_color": "#38bdf8",
   "background_color": "#020617",
+  "theme_color": "#38bdf8",
   "icons": [
     {
       "src": "https://avatars.githubusercontent.com/u/197945084?v=4",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "https://avatars.githubusercontent.com/u/197945084?v=4",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }
