@@ -2,7 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient('https://nfhzzympuvilshvxsnhd.supabase.co', 'sb_publishable_ssWbjSHfhXpm5orvSLyKIw_SNPdJeZT');
+// Macluumaadka Supabase - Hadda waxay ka imaanayaan Environment Variables (.env)
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://nfhzzympuvilshvxsnhd.supabase.co';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_ssWbjSHfhXpm5orvSLyKIw_SNPdJeZT';
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const DriverDashboard = () => {
   const navigate = useNavigate();
@@ -99,7 +103,7 @@ const DriverDashboard = () => {
               <a href={`tel:${order.phone}`} style={{backgroundColor: '#22c55e', color: 'white', padding: '12px', borderRadius: '8px', textAlign: 'center', textDecoration: 'none', fontWeight: 'bold'}}>WAC</a>
               
               <button 
-                onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${order.lat},${order.lng}`, '_blank')} 
+                onClick={() => window.open(`https://www.google.com/maps?q=${order.lat},${order.lng}`, '_blank')} 
                 style={{backgroundColor: '#3b82f6', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer'}}
               >
                 MAP 📍
@@ -116,9 +120,9 @@ const DriverDashboard = () => {
         ))
       )}
 
-      {/* Footer Navigation (Optional) */}
-      <div style={{position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', width: '90%'}}>
-         <button onClick={() => navigate('/')} style={{width: '100%', padding: '10px', backgroundColor: '#334155', color: '#94a3b8', border: 'none', borderRadius: '10px', fontSize: '12px'}}>
+      {/* Footer Navigation */}
+      <div style={{marginTop: '40px', paddingBottom: '20px'}}>
+         <button onClick={() => navigate('/')} style={{width: '100%', padding: '10px', backgroundColor: '#334155', color: '#94a3b8', border: 'none', borderRadius: '10px', fontSize: '12px', cursor: 'pointer'}}>
            Gudbi Bogga Hore (Macaamiisha)
          </button>
       </div>
