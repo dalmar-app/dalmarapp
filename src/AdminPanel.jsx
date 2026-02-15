@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  'https://nfhzzympuvilshvxsnhd.supabase.co', 
-  'sb_publishable_ssWbjSHfhXpm5orvSLyKIw_SNPdJeZT'
-);
+// Macluumaadka Supabase - Waxaa laga akhriyayaa Environment Variables
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://nfhzzympuvilshvxsnhd.supabase.co';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_ssWbjSHfhXpm5orvSLyKIw_SNPdJeZT';
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const AdminPanel = () => {
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
@@ -27,7 +28,11 @@ const AdminPanel = () => {
 
   const handleAdminLogin = (e) => {
     e.preventDefault();
-    if (adminUser.toLowerCase() === "ahmed" && adminPin === "2003") {
+    // Hadda waxaa laga akhriyayaa .env, haddii kalena waa kuwii hore
+    const VALID_USER = import.meta.env.VITE_ADMIN_USER || "ahmed";
+    const VALID_PIN = import.meta.env.VITE_ADMIN_PIN || "2003";
+
+    if (adminUser.toLowerCase() === VALID_USER && adminPin === VALID_PIN) {
       setIsAdminLoggedIn(true);
       fetchData();
     } else {
@@ -39,7 +44,6 @@ const AdminPanel = () => {
     setVisiblePins(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // --- SHAQADA CUSUB: LACAGTA ---
   const togglePaymentStatus = async (id, currentStatus) => {
     const { error } = await supabase
       .from('drivers')
@@ -47,7 +51,7 @@ const AdminPanel = () => {
       .eq('id', id);
     
     if (!error) {
-      fetchData(); // Dib u soo cusboonaysii liiska
+      fetchData();
     } else {
       alert("Cilad dhacday: " + error.message);
     }
