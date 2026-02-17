@@ -129,7 +129,7 @@ const HomePage = () => {
           Eng Ahmed Abdirisak Ali
         </h1> 
         
-        <p style={styles.title}>Fullstack Developer (Junior)</p> 
+        <p style={styles.title}>Fullstack Developer (Senior)</p> 
         <div style={styles.bioCard}> 
           <p style={styles.bioText}>App-ka <strong>DALMAR</strong> waa xal casri ah oo u adeegaya magaalada Garowe. 8 bilood oo shaqo adag ah ka dib, waa diyaar!</p> 
         </div> 
