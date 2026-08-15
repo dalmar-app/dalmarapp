@@ -79,7 +79,7 @@ const DriverDashboard = () => {
       .eq('id', orderId);
 
     if (error) {
-      alert("Waan ka xumahay, dalabkan waxaa qaatay darawal kale!");
+      alert("Cilad ayaa dhacday: " + error.message);
     } else {
       alert("Hambalyo! Si guul leh ayaad u qaadatay dalabkan.");
       fetchOrders();
