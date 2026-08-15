@@ -11,6 +11,9 @@ const HomePage = () => {
   const [bookingStatus, setBookingStatus] = useState('pending');
   const [assignedDriverPhone, setAssignedDriverPhone] = useState('');
   
+  const [location, setLocation] = useState({ lat: null, lng: null });
+  const [locating, setLocating] = useState(false);
+
   const [clickCount, setClickCount] = useState(0); 
   const [profileImage, setProfileImage] = useState(""); 
   const [isAdmin, setIsAdmin] = useState(false); 
@@ -31,7 +34,26 @@ const HomePage = () => {
     }; 
     fetchProfile();
 
-    // 2. PWA: Listen for install prompt
+    // 2. Helitaanka Location-ka qofka si otomaatig ah markuu boggoggu furmo
+    if (navigator.geolocation) {
+      setLocating(true);
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+          setLocating(false);
+        },
+        (error) => {
+          console.log("Location error:", error.message);
+          setLocating(false);
+        },
+        { enableHighAccuracy: true }
+      );
+    }
+
+    // 3. PWA: Listen for install prompt
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -93,9 +115,19 @@ const HomePage = () => {
   const handleBooking = async () => { 
     if (phone.length < 7) return alert("Fadlan nambar sax ah geli!"); 
     
+    // Hubi in location la haysto (haddii kale default Garowe coordinates geli ama uga tag madhan)
+    const currentLat = location.lat || 8.4000; 
+    const currentLng = location.lng || 48.4833;
+
     const { data, error } = await supabase
       .from('bookings')
-      .insert([{ phone, city: 'Garowe', status: 'pending' }])
+      .insert([{ 
+        phone, 
+        city: 'Garowe', 
+        status: 'pending',
+        lat: currentLat,
+        lng: currentLng
+      }])
       .select();
 
     if (error) {
@@ -141,7 +173,7 @@ const HomePage = () => {
             width: 100%; 
             height: 100%; 
             object-fit: cover; 
-            object-position: center top; /* Halkan ayaa lagu saxay cabbirka wejiga */
+            object-position: center top; 
           } 
           .admin-overlay { 
             position: absolute; bottom: 0; background: rgba(0, 0, 0, 0.7); 
@@ -185,6 +217,11 @@ const HomePage = () => {
         {!isOrdered ? ( 
           <div style={styles.card}> 
             <h2 style={{color: '#38bdf8', marginBottom: '15px'}}>Dalbo Bajaaj</h2> 
+            
+            <div style={{marginBottom: '10px', fontSize: '13px', color: locatiingColor(locating, location)}}>
+              {locating ? "📍 Waa la raadinayaa goobtaada..." : location.lat ? "📍 Goobtaada waa la helay (GPS Active)" : "⚠️ GPS wuxuu u baahan yahay ogolaansho"}
+            </div>
+
             <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} style={styles.input} placeholder="Nambarkaaga..." /> 
             <button onClick={handleBooking} style={styles.btn}>GUD BI DALABKA</button> 
             
@@ -201,7 +238,7 @@ const HomePage = () => {
                 <p>Tel-ka Darawalka: <strong>{assignedDriverPhone}</strong></p>
               </div>
             ) : (
-              <p>Waxaan raadineynaa darawalka kuugu dhow...</p>
+              <p style={{marginTop: '10px'}}>Waxaan raadineynaa darawalka kuugu dhow ee ku soo aaddan...</p>
             )}
           </div> 
         )} 
@@ -209,6 +246,13 @@ const HomePage = () => {
     </div> 
   ); 
 }; 
+
+// Helper function midabada status-ka location-ka
+const locatingColor = (locating, location) => {
+  if (locating) return '#facc15';
+  if (location.lat) return '#22c55e';
+  return '#ef4444';
+};
 
 const styles = { 
   container: { padding: '40px 20px', backgroundColor: '#020617', minHeight: '100vh', color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', fontFamily: 'sans-serif' }, 
