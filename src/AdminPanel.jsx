@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+   import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://nfhzzympuvilshvxsnhd.supabase.co';
@@ -21,6 +21,25 @@ const AdminPanel = () => {
   useEffect(() => {
     if (isAdminLoggedIn) {
       fetchData();
+
+      // Real-time listener si Admin-ku u arko dalabyada iyo darawallada isla daqiiqaddaas
+      const channel = supabase
+        .channel('admin-realtime')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'bookings' },
+          () => fetchData()
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'drivers' },
+          () => fetchData()
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     }
   }, [isAdminLoggedIn]);
 
@@ -91,18 +110,6 @@ const AdminPanel = () => {
     }
   };
 
-  const assignDriver = async (bookingId, driverPhone) => {
-    const { error } = await supabase
-      .from('bookings')
-      .update({ driver_phone: driverPhone })
-      .eq('id', bookingId);
-    if (!error) {
-      fetchData();
-    } else {
-      alert("Khalad ayaa dhacay: " + error.message);
-    }
-  };
-
   if (!isAdminLoggedIn) {
     return (
       <div style={styles.loginOverlay}>
@@ -149,7 +156,7 @@ const AdminPanel = () => {
                     {d.name} {d.is_paid ? '✅' : '❌'}
                   </p>
                   <p style={{margin: 0, fontSize: '12px', color: '#94a3b8'}}>
-                    PIN: {visiblePins[d.id] ? <span style={{color: '#38bdf8', fontWeight: 'bold'}}>{d.pin}</span> : "****"} | {d.is_paid ? 'Paid' : 'Unpaid'}
+                    PIN: {visiblePins[d.id] ? <span style={{color: '#38bdf8', fontWeight: 'bold'}}>{d.pin}</span> : "****"} | Tel: {d.phone}
                   </p>
                 </div>
                 <div style={{display: 'flex', gap: '5px', alignItems: 'center'}}>
@@ -168,14 +175,14 @@ const AdminPanel = () => {
         </section>
       </div>
 
-      <h3 style={{marginTop: '40px'}}>📋 Dalabaadka u dambeeyay</h3>
+      <h3 style={{marginTop: '40px'}}>📋 Dalabaadka u dambeeyay (Live Tracking)</h3>
       <div style={styles.tableWrapper}>
         <table style={styles.table}>
           <thead>
             <tr style={{backgroundColor: '#334155'}}>
               <th style={styles.th}>Magaalada</th>
               <th style={styles.th}>Tel Macmiilka</th>
-              <th style={styles.th}>Qoondee Darawal</th>
+              <th style={styles.th}>Darawalka Qabsaday</th>
               <th style={styles.th}>Status</th>
               <th style={styles.th}>Action</th>
             </tr>
@@ -186,16 +193,22 @@ const AdminPanel = () => {
                 <td style={styles.td}>{b.city}</td>
                 <td style={styles.td}>{b.phone}</td>
                 <td style={styles.td}>
-                  <select 
-                    onChange={(e) => assignDriver(b.id, e.target.value)} 
-                    value={b.driver_phone || ''} 
-                    style={{...styles.input, marginBottom: 0, padding: '6px', backgroundColor: '#0f172a'}}
-                  >
-                    <option value="">Lama qoondeyn</option>
-                    {drivers.map(d => <option key={d.id} value={d.phone}>{d.name} ({d.phone})</option>)}
-                  </select>
+                  {b.driver_phone ? (
+                    <span style={{color: '#22c55e', fontWeight: 'bold'}}>Tel: {b.driver_phone}</span>
+                  ) : (
+                    <span style={{color: '#eab308'}}>Wuxuu sugayaa darawal...</span>
+                  )}
                 </td>
-                <td style={styles.td}>{b.status}</td>
+                <td style={styles.td}>
+                  <span style={{
+                    padding: '4px 8px', 
+                    borderRadius: '4px', 
+                    fontSize: '12px',
+                    backgroundColor: b.status === 'completed' ? '#16a34a' : b.status === 'accepted' ? '#2563eb' : '#ca8a04'
+                  }}>
+                    {b.status}
+                  </span>
+                </td>
                 <td style={styles.td}>
                   <button onClick={() => deleteBooking(b.id)} style={styles.delBtnTable}>Delete</button>
                 </td>
@@ -227,7 +240,7 @@ const styles = {
   td: { padding: '15px' },
   delBtnTable: { backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer', fontSize: '12px' },
   loginOverlay: { height: '100vh', backgroundColor: '#0f172a', display: 'flex', justifyContent: 'center', alignItems: 'center' },
-  loginCard: { backgroundColor: '#1e293b', padding: '40px', borderRadius: '25px', textAlign: 'center', border: '1px solid #334155' }
+  loginCard: { backgroundColor: '#1e293b', padding: '40px', borderRadius: '25px', textAlign: 'center', border: '1px solid #38bdf8' }
 };
 
 export default AdminPanel;
