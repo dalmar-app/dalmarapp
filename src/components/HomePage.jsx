@@ -7,6 +7,10 @@ const supabase = createClient('https://nfhzzympuvilshvxsnhd.supabase.co', 'sb_pu
 const HomePage = () => { 
   const [phone, setPhone] = useState(''); 
   const [isOrdered, setIsOrdered] = useState(false); 
+  const [bookingId, setBookingId] = useState(null);
+  const [bookingStatus, setBookingStatus] = useState('pending');
+  const [assignedDriverPhone, setAssignedDriverPhone] = useState('');
+  
   const [clickCount, setClickCount] = useState(0); 
   const [profileImage, setProfileImage] = useState(""); 
   const [isAdmin, setIsAdmin] = useState(false); 
@@ -33,7 +37,6 @@ const HomePage = () => {
       setDeferredPrompt(e);
     });
 
-    // 3. PWA: Check if already installed
     window.addEventListener('appinstalled', () => {
       setIsInstalled(true);
       setDeferredPrompt(null);
@@ -43,6 +46,36 @@ const HomePage = () => {
       setIsInstalled(true);
     }
   }, []); 
+
+  // Realtime listener si loo ogaado goorta darawalku aqbalo dalabka
+  useEffect(() => {
+    if (!bookingId) return;
+
+    const channel = supabase
+      .channel('customer-booking-tracking')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'bookings',
+          filter: `id=eq.${bookingId}`
+        },
+        (payload) => {
+          if (payload.new) {
+            setBookingStatus(payload.new.status);
+            if (payload.new.driver_phone) {
+              setAssignedDriverPhone(payload.new.driver_phone);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [bookingId]);
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
@@ -57,27 +90,25 @@ const HomePage = () => {
     }
   };
 
-  const handleImageUpload = async (e) => { 
-    const file = e.target.files[0]; 
-    if (!file) return; 
-
-    const reader = new FileReader(); 
-    reader.onloadend = async () => { 
-      const base64Image = reader.result; 
-      setProfileImage(base64Image);  
-      await supabase.from('profiles').update({ image_url: base64Image }).eq('owner_name', 'Eng Ahmed'); 
-      alert("Sawirka waa la kaydiyay! ✅"); 
-    }; 
-    reader.readAsDataURL(file); 
-  }; 
-
   const handleBooking = async () => { 
     if (phone.length < 7) return alert("Fadlan nambar sax ah geli!"); 
-    setIsOrdered(true); 
-    await supabase.from('bookings').insert([{ phone, city: 'Garowe', status: 'pending' }]); 
+    
+    const { data, error } = await supabase
+      .from('bookings')
+      .insert([{ phone, city: 'Garowe', status: 'pending' }])
+      .select();
+
+    if (error) {
+      alert("Khalad ayaa dhacay: " + error.message);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      setBookingId(data[0].id);
+      setIsOrdered(true);
+    }
   }; 
 
-  // QAYBTII AAD II QAYLISAY: ADMIN & DRIVER CLICKS
   const handleNameClick = () => { 
     const newCount = clickCount + 1; 
     setClickCount(newCount); 
@@ -118,13 +149,23 @@ const HomePage = () => {
       <div style={styles.heroSection}> 
         <div style={styles.imageWrapper}> 
           <label className="profile-img-container"> 
-            {isAdmin && <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />} 
+            {isAdmin && <input type="file" accept="image/*" onChange={(e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onloadend = async () => {
+                const base64Image = reader.result;
+                setProfileImage(base64Image);
+                await supabase.from('profiles').update({ image_url: base64Image }).eq('owner_name', 'Eng Ahmed');
+                alert("Sawirka waa la kaydiyay! ✅");
+              };
+              reader.readAsDataURL(file);
+            }} style={{ display: 'none' }} />} 
             <img src={profileImage || "https://avatars.githubusercontent.com/u/197945084?v=4"} alt="Eng Ahmed" className="profile-img" /> 
             {isAdmin && <div className="admin-overlay">GUJI SI AAD U BEDDESHO</div>} 
           </label> 
         </div> 
         
-        {/* HALKAN AYAY CLICKS-KU KA SHAQAYNAYAAN */}
         <h1 onClick={handleNameClick} style={styles.name}>
           Eng Ahmed Abdirisak Ali
         </h1> 
@@ -142,13 +183,22 @@ const HomePage = () => {
             <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} style={styles.input} placeholder="Nambarkaaga..." /> 
             <button onClick={handleBooking} style={styles.btn}>GUD BI DALABKA</button> 
             
-            {/* INSTALL BUTTON */}
             {!isInstalled && (
               <button onClick={handleInstallClick} style={styles.installBtn}>📥 INSTALL APP (DIRECT)</button>
             )}
           </div> 
         ) : ( 
-          <div style={styles.successCard}><h3>MAHADSANID! ✅</h3><p>Darawal ayaa kusoo wacaya.</p></div> 
+          <div style={styles.successCard}>
+            <h3>MAHADSANID! ✅</h3>
+            {assignedDriverPhone ? (
+              <div>
+                <p style={{marginTop: '10px', fontSize: '16px', fontWeight: 'bold'}}>🚖 Darawal ayaa la helay!</p>
+                <p>Tel-ka Darawalka: <strong>{assignedDriverPhone}</strong></p>
+              </div>
+            ) : (
+              <p>Waxaan raadineynaa darawalka kuugu dhow...</p>
+            )}
+          </div> 
         )} 
       </div> 
     </div> 
@@ -168,7 +218,7 @@ const styles = {
   input: { padding: '12px', width: '100%', borderRadius: '10px', marginBottom: '15px', border: '1px solid #334155', backgroundColor: '#0f172a', color: 'white', boxSizing: 'border-box' }, 
   btn: { padding: '14px', width: '100%', backgroundColor: '#38bdf8', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }, 
   installBtn: { padding: '10px', width: '100%', backgroundColor: 'transparent', border: '1px solid #38bdf8', color: '#38bdf8', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px' },
-  successCard: { backgroundColor: '#16a34a', padding: '25px', borderRadius: '20px', textAlign: 'center' } 
+  successCard: { backgroundColor: '#16a34a', padding: '25px', borderRadius: '20px', textAlign: 'center', color: 'white' } 
 }; 
 
 export default HomePage;
