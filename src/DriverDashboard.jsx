@@ -43,15 +43,22 @@ const DriverDashboard = () => {
   }, [navigate, driverPhone]);
 
   const fetchOrders = async () => {
-    // 1. Soo qaado dalabaadka suubban ee cidna qaadan (Pending & Unassigned)
-    const { data: pendingData } = await supabase
+    // 1. Soo qaado dhammaan dalabyada status-koodu yahay pending
+    const { data: pendingData, error: pendingError } = await supabase
       .from('bookings')
       .select('*')
       .eq('status', 'pending')
-      .is('driver_phone', null)
       .order('created_at', { ascending: false });
 
-    setAvailableOrders(pendingData || []);
+    if (pendingError) {
+      console.log("Error fetching orders:", pendingError.message);
+    }
+
+    // Shaandhee JavaScript si ay u soo qabato haddii driver_phone uu yahay null ama madhan
+    const available = (pendingData || []).filter(
+      order => !order.driver_phone || order.driver_phone === ''
+    );
+    setAvailableOrders(available);
 
     // 2. Soo qaado dalabaadka uu darawalkan laftiisa gacanta ku hayo (Active Rides)
     const { data: myData } = await supabase
@@ -69,8 +76,7 @@ const DriverDashboard = () => {
     const { error } = await supabase
       .from('bookings')
       .update({ driver_phone: driverPhone, status: 'accepted' })
-      .eq('id', orderId)
-      .is('driver_phone', null); // Si uusan laba darawal isku qabsan
+      .eq('id', orderId);
 
     if (error) {
       alert("Waan ka xumahay, dalabkan waxaa qaatay darawal kale!");
