@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 
-// Macluumaadka Supabase - Hadda waxay ka imaanayaan Environment Variables (.env)
+// Configuration
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://nfhzzympuvilshvxsnhd.supabase.co';
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_ssWbjSHfhXpm5orvSLyKIw_SNPdJeZT';
 
@@ -11,52 +11,63 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const DriverDashboard = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
+  
+  // Hel xogta darawalka oo laga soo qaatay localStorage
+  const driverPhone = localStorage.getItem('driverPhone'); 
   const driverName = localStorage.getItem('driverName') || 'Darawal';
 
   useEffect(() => {
-    // 1. Amniga: Hubi in qofka soo galay uu yahay darawal sax ah
+    // Hubi in darawalku login yahay
     if (localStorage.getItem('driverAuth') !== 'true') {
       navigate('/driver-login');
+      return;
     }
 
-    fetchOrders();
+    // Soo qaado dalabyada marka uu boggu furmo
+    fetchDriverOrders();
 
-    // 2. Real-time Listen: Markuu dalab cusub soo dhaco
+    // Ku xir Real-time updates si marka dalab cusub yimaado loogu wargeliyo
     const channel = supabase
       .channel('driver-updates')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'bookings' },
+        { event: 'INSERT', schema: 'public', table: 'bookings', filter: `driver_phone=eq.${driverPhone}` },
         (payload) => {
-          fetchOrders();
-          // Halkan waxaad ku dari kartaa dhawaaq: new Audio('/notification.mp3').play();
+          // Dhawaaq marka dalab cusub yimaado
+          const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+          audio.play().catch(e => console.log("Audio play prevented"));
+          fetchDriverOrders();
         }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'bookings' },
-        () => fetchOrders()
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [navigate]);
+  }, [navigate, driverPhone]);
 
-  const fetchOrders = async () => {
+  const fetchDriverOrders = async () => {
     const { data, error } = await supabase
       .from('bookings')
       .select('*')
+      .eq('driver_phone', driverPhone)
       .order('created_at', { ascending: false });
     
-    if (!error) setOrders(data || []);
+    if (error) {
+      console.error("Error fetching orders:", error);
+    } else {
+      setOrders(data || []);
+    }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Ma tirtirtaa dalabkan markaad dhamaystirto?")) {
+    if (window.confirm("Ma xaqiijinaysaa in dalabkan la dhamaystiray?")) {
       const { error } = await supabase.from('bookings').delete().eq('id', id);
-      if (!error) fetchOrders();
+      if (!error) {
+        fetchDriverOrders();
+      } else {
+        alert("Waa dhacday khalad markii la tirtirayey.");
+      }
     }
   };
 
@@ -67,13 +78,10 @@ const DriverDashboard = () => {
       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #334155', paddingBottom: '15px'}}>
         <div>
           <h2 style={{color: '#38bdf8', margin: 0, fontSize: '18px'}}>🛺 {driverName}</h2>
-          <span style={{fontSize: '12px', color: '#22c55e'}}>Online & Diyaar</span>
+          <span style={{fontSize: '12px', color: '#22c55e'}}>● Online & Diyaar</span>
         </div>
         <button 
-          onClick={() => {
-            localStorage.clear(); // Wax walba masax markuu Logout dhaho
-            navigate('/');
-          }} 
+          onClick={() => { localStorage.clear(); navigate('/'); }} 
           style={{color: '#ef4444', background: 'none', border: '1px solid #ef4444', padding: '5px 10px', borderRadius: '5px', cursor: 'pointer', fontSize: '12px'}}
         >
           LOGOUT
@@ -84,24 +92,17 @@ const DriverDashboard = () => {
 
       {orders.length === 0 ? (
         <div style={{textAlign: 'center', marginTop: '100px'}}>
-          <p style={{color: '#94a3b8'}}>Hadda wax dalab ah ma jiraan.</p>
-          <p style={{fontSize: '12px', color: '#475569'}}>App-ka ha xirin si aad dalab u hesho...</p>
+          <p style={{color: '#94a3b8'}}>Hadda wax dalab ah oo laguugu talagalay ma jiraan.</p>
         </div>
       ) : (
         orders.map(order => (
           <div key={order.id} style={{backgroundColor: '#1e293b', padding: '20px', borderRadius: '15px', marginBottom: '15px', border: '1px solid #334155'}}>
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
               <p style={{fontSize: '18px', margin: 0}}>📞 <strong>{order.phone}</strong></p>
-              <span style={{fontSize: '11px', backgroundColor: '#334155', padding: '3px 8px', borderRadius: '5px'}}>{order.city}</span>
             </div>
-            
-            <p style={{fontSize: '11px', color: '#94a3b8', marginTop: '5px'}}>
-              Saacadda: {new Date(order.created_at).toLocaleTimeString()}
-            </p>
             
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '15px'}}>
               <a href={`tel:${order.phone}`} style={{backgroundColor: '#22c55e', color: 'white', padding: '12px', borderRadius: '8px', textAlign: 'center', textDecoration: 'none', fontWeight: 'bold'}}>WAC</a>
-              
               <button 
                 onClick={() => window.open(`https://www.google.com/maps?q=${order.lat},${order.lng}`, '_blank')} 
                 style={{backgroundColor: '#3b82f6', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer'}}
@@ -112,20 +113,13 @@ const DriverDashboard = () => {
             
             <button 
               onClick={() => handleDelete(order.id)} 
-              style={{width: '100%', marginTop: '15px', padding: '10px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '500'}}
+              style={{width: '100%', marginTop: '15px', padding: '10px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer'}}
             >
               DHAMAYSTIR (TIRTIR)
             </button>
           </div>
         ))
       )}
-
-      {/* Footer Navigation */}
-      <div style={{marginTop: '40px', paddingBottom: '20px'}}>
-         <button onClick={() => navigate('/')} style={{width: '100%', padding: '10px', backgroundColor: '#334155', color: '#94a3b8', border: 'none', borderRadius: '10px', fontSize: '12px', cursor: 'pointer'}}>
-           Gudbi Bogga Hore (Macaamiisha)
-         </button>
-      </div>
     </div>
   );
 };
