@@ -10,33 +10,29 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const DriverDashboard = () => {
   const navigate = useNavigate();
-  const [orders, setOrders] = useState([]);
+  const [availableOrders, setAvailableOrders] = useState([]);
+  const [myOrders, setMyOrders] = useState([]);
   
-  // Hel xogta darawalka oo laga soo qaatay localStorage
   const driverPhone = localStorage.getItem('driverPhone'); 
   const driverName = localStorage.getItem('driverName') || 'Darawal';
+  const driverCity = localStorage.getItem('driverCity') || 'Garowe';
 
   useEffect(() => {
-    // Hubi in darawalku login yahay
     if (localStorage.getItem('driverAuth') !== 'true') {
       navigate('/driver-login');
       return;
     }
 
-    // Soo qaado dalabyada marka uu boggu furmo
-    fetchDriverOrders();
+    fetchOrders();
 
-    // Ku xir Real-time updates si marka dalab cusub yimaado loogu wargeliyo
+    // Real-time: Dhageyso dalabaadka cusub ama kuwa isbeddelaya
     const channel = supabase
-      .channel('driver-updates')
+      .channel('automatic-driver-updates')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'bookings', filter: `driver_phone=eq.${driverPhone}` },
-        (payload) => {
-          // Dhawaaq marka dalab cusub yimaado
-          const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
-          audio.play().catch(e => console.log("Audio play prevented"));
-          fetchDriverOrders();
+        { event: '*', schema: 'public', table: 'bookings' },
+        () => {
+          fetchOrders();
         }
       )
       .subscribe();
@@ -46,27 +42,55 @@ const DriverDashboard = () => {
     };
   }, [navigate, driverPhone]);
 
-  const fetchDriverOrders = async () => {
-    const { data, error } = await supabase
+  const fetchOrders = async () => {
+    // 1. Soo qaado dalabaadka suubban ee cidna qaadan (Pending & Unassigned)
+    const { data: pendingData } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('status', 'pending')
+      .is('driver_phone', null)
+      .order('created_at', { ascending: false });
+
+    setAvailableOrders(pendingData || []);
+
+    // 2. Soo qaado dalabaadka uu darawalkan laftiisa gacanta ku hayo (Active Rides)
+    const { data: myData } = await supabase
       .from('bookings')
       .select('*')
       .eq('driver_phone', driverPhone)
+      .neq('status', 'completed')
       .order('created_at', { ascending: false });
-    
+
+    setMyOrders(myData || []);
+  };
+
+  // Darawalku wuxuu qaadanayaa dalabka
+  const acceptOrder = async (orderId) => {
+    const { error } = await supabase
+      .from('bookings')
+      .update({ driver_phone: driverPhone, status: 'accepted' })
+      .eq('id', orderId)
+      .is('driver_phone', null); // Si uusan laba darawal isku qabsan
+
     if (error) {
-      console.error("Error fetching orders:", error);
+      alert("Waan ka xumahay, dalabkan waxaa qaatay darawal kale!");
     } else {
-      setOrders(data || []);
+      alert("Hambalyo! Si guul leh ayaad u qaadatay dalabkan.");
+      fetchOrders();
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Ma xaqiijinaysaa in dalabkan la dhamaystiray?")) {
-      const { error } = await supabase.from('bookings').delete().eq('id', id);
+  const completeOrder = async (id) => {
+    if (window.confirm("Ma xaqiijinaysaa in safarkii la dhammeeyay?")) {
+      const { error } = await supabase
+        .from('bookings')
+        .update({ status: 'completed' })
+        .eq('id', id);
+        
       if (!error) {
-        fetchDriverOrders();
+        fetchOrders();
       } else {
-        alert("Waa dhacday khalad markii la tirtirayey.");
+        alert("Cilad ayaa dhacday.");
       }
     }
   };
@@ -77,8 +101,8 @@ const DriverDashboard = () => {
       {/* Header-ka Dashboard-ka */}
       <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #334155', paddingBottom: '15px'}}>
         <div>
-          <h2 style={{color: '#38bdf8', margin: 0, fontSize: '18px'}}>🛺 {driverName}</h2>
-          <span style={{fontSize: '12px', color: '#22c55e'}}>● Online & Diyaar</span>
+          <h2 style={{color: '#38bdf8', margin: 0, fontSize: '18px'}}>🚖 {driverName}</h2>
+          <span style={{fontSize: '12px', color: '#22c55e'}}>● Online ({driverCity})</span>
         </div>
         <button 
           onClick={() => { localStorage.clear(); navigate('/'); }} 
@@ -88,34 +112,53 @@ const DriverDashboard = () => {
         </button>
       </div>
 
-      <h3 style={{fontSize: '16px', marginBottom: '15px'}}>Dalabyada yaalla:</h3>
-
-      {orders.length === 0 ? (
-        <div style={{textAlign: 'center', marginTop: '100px'}}>
-          <p style={{color: '#94a3b8'}}>Hadda wax dalab ah oo laguugu talagalay ma jiraan.</p>
-        </div>
-      ) : (
-        orders.map(order => (
-          <div key={order.id} style={{backgroundColor: '#1e293b', padding: '20px', borderRadius: '15px', marginBottom: '15px', border: '1px solid #334155'}}>
-            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-              <p style={{fontSize: '18px', margin: 0}}>📞 <strong>{order.phone}</strong></p>
-            </div>
-            
-            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '15px'}}>
-              <a href={`tel:${order.phone}`} style={{backgroundColor: '#22c55e', color: 'white', padding: '12px', borderRadius: '8px', textAlign: 'center', textDecoration: 'none', fontWeight: 'bold'}}>WAC</a>
+      {/* DALABAADKA UU DARAWALKAN HADA WADO (ACTIVE RIDES) */}
+      {myOrders.length > 0 && (
+        <div style={{marginBottom: '30px'}}>
+          <h3 style={{fontSize: '16px', color: '#22c55e', marginBottom: '10px'}}>🟢 Safarkaaga Aqoonsan:</h3>
+          {myOrders.map(order => (
+            <div key={order.id} style={{backgroundColor: '#064e3b', padding: '20px', borderRadius: '15px', marginBottom: '15px', border: '1px solid #059669'}}>
+              <p style={{fontSize: '18px', margin: '0 0 10px 0'}}>📞 Macmiilka: <strong>{order.phone}</strong></p>
+              
+              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '15px'}}>
+                <a href={`tel:${order.phone}`} style={{backgroundColor: '#22c55e', color: 'white', padding: '12px', borderRadius: '8px', textAlign: 'center', textDecoration: 'none', fontWeight: 'bold'}}>WAC MACMIILKA</a>
+                <button 
+                  onClick={() => window.open(`https://www.google.com/maps?q=${order.lat},${order.lng}`, '_blank')} 
+                  style={{backgroundColor: '#3b82f6', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer'}}
+                >
+                  MAP 📍
+                </button>
+              </div>
+              
               <button 
-                onClick={() => window.open(`https://www.google.com/maps?q=${order.lat},${order.lng}`, '_blank')} 
-                style={{backgroundColor: '#3b82f6', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer'}}
+                onClick={() => completeOrder(order.id)} 
+                style={{width: '100%', marginTop: '15px', padding: '12px', backgroundColor: '#eab308', color: '#0f172a', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer'}}
               >
-                MAP 📍
+                DHAMAYSTIR SAFARKA ✅
               </button>
             </div>
+          ))}
+        </div>
+      )}
+
+      {/* DALABAADKA SUUQA / CUSUB EE SOO GALAY */}
+      <h3 style={{fontSize: '16px', marginBottom: '15px'}}>📡 Dalabyada cusub ee la heli karo:</h3>
+
+      {availableOrders.length === 0 ? (
+        <div style={{textAlign: 'center', marginTop: '40px', backgroundColor: '#1e293b', padding: '30px', borderRadius: '15px'}}>
+          <p style={{color: '#94a3b8', margin: 0}}>Hadda ma jiraan dalabyo sugaya darawal.</p>
+        </div>
+      ) : (
+        availableOrders.map(order => (
+          <div key={order.id} style={{backgroundColor: '#1e293b', padding: '20px', borderRadius: '15px', marginBottom: '15px', border: '1px solid #334155'}}>
+            <p style={{fontSize: '16px', margin: '0 0 10px 0'}}>📞 Tel: <strong>{order.phone}</strong></p>
+            <p style={{fontSize: '13px', color: '#94a3b8', margin: '0 0 15px 0'}}>Magaalada: {order.city}</p>
             
             <button 
-              onClick={() => handleDelete(order.id)} 
-              style={{width: '100%', marginTop: '15px', padding: '10px', backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer'}}
+              onClick={() => acceptOrder(order.id)} 
+              style={{width: '100%', padding: '14px', backgroundColor: '#38bdf8', color: '#0f172a', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px'}}
             >
-              DHAMAYSTIR (TIRTIR)
+              QAADO DALABKAN 🚖
             </button>
           </div>
         ))
