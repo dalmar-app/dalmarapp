@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 
@@ -16,6 +16,30 @@ const DriverDashboard = () => {
   const driverPhone = localStorage.getItem('driverPhone'); 
   const driverName = localStorage.getItem('driverName') || 'Darawal';
   const driverCity = localStorage.getItem('driverCity') || 'Garowe';
+
+  // Isticmaalka useRef si loo xasuusto tiradii hore ee dalabyada
+  const prevOrdersCount = useRef(0);
+
+  // Shaqada soo saaraysa codka ogaysiiska (Web Audio API)
+  const playNotificationSound = () => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 note
+      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.4);
+    } catch (e) {
+      console.log("Audio context error:", e);
+    }
+  };
 
   useEffect(() => {
     if (localStorage.getItem('driverAuth') !== 'true') {
@@ -58,6 +82,13 @@ const DriverDashboard = () => {
     const available = (pendingData || []).filter(
       order => !order.driver_phone || order.driver_phone === ''
     );
+
+    // Haddii dalabyadu kordheen (dalab cusub soo galay), garaac codka ogaysiiska!
+    if (available.length > prevOrdersCount.current && prevOrdersCount.current !== 0) {
+      playNotificationSound();
+    }
+    prevOrdersCount.current = available.length;
+
     setAvailableOrders(available);
 
     // 2. Soo qaado dalabaadka uu darawalkan laftiisa gacanta ku hayo (Active Rides)
@@ -160,6 +191,17 @@ const DriverDashboard = () => {
             <p style={{fontSize: '16px', margin: '0 0 10px 0'}}>📞 Tel: <strong>{order.phone}</strong></p>
             <p style={{fontSize: '13px', color: '#94a3b8', margin: '0 0 15px 0'}}>Magaalada: {order.city}</p>
             
+            {/* Badhanka Map-ka ee dalabka cusub */}
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px'}}>
+              <button 
+                onClick={() => window.open(`https://www.google.com/maps?q=${order.lat},${order.lng}`, '_blank')} 
+                style={{backgroundColor: '#3b82f6', color: 'white', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px'}}
+              >
+                FIIRI MAP-KA 📍
+              </button>
+              <a href={`tel:${order.phone}`} style={{backgroundColor: '#334155', color: 'white', padding: '12px', borderRadius: '8px', textAlign: 'center', textDecoration: 'none', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>WAC 📞</a>
+            </div>
+
             <button 
               onClick={() => acceptOrder(order.id)} 
               style={{width: '100%', padding: '14px', backgroundColor: '#38bdf8', color: '#0f172a', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '15px'}}
