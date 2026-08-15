@@ -137,7 +137,12 @@ const HomePage = () => {
             justify-content: center; align-items: center; background-color: #0f172a; 
             position: relative; cursor: pointer; 
           } 
-          .profile-img { width: 100%; height: 100%; object-fit: cover; } 
+          .profile-img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            object-position: center top; /* Halkan ayaa lagu saxay cabbirka wejiga */
+          } 
           .admin-overlay { 
             position: absolute; bottom: 0; background: rgba(0, 0, 0, 0.7); 
             color: #38bdf8; width: 100%; font-size: 11px; padding: 8px 0; 
